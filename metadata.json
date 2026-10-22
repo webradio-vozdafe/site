@@ -1,0 +1,8 @@
+{
+  "name": "VOZ DA FÉ",
+  "description": "Uma voz que renova a sua fé.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

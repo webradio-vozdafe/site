@@ -1,0 +1,100 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "System user",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "listener"] }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "PrayerRequest": {
+      "title": "PrayerRequest",
+      "description": "Prayer request from a listener",
+      "type": "object",
+      "properties": {
+        "authorName": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "category": { "type": "string", "enum": ["Saúde", "Família", "Emprego", "Outros"] },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "prayersCount": { "type": "number" },
+        "hasUserPrayed": { "type": "boolean" }
+      },
+      "required": ["authorName", "content", "createdAt"]
+    },
+    "SongRequest": {
+      "title": "SongRequest",
+      "description": "Song request submitted by listeners",
+      "type": "object",
+      "properties": {
+        "listenerName": { "type": "string" },
+        "city": { "type": "string" },
+        "songTitle": { "type": "string" },
+        "artist": { "type": "string" },
+        "dedicationTo": { "type": "string" },
+        "message": { "type": "string" },
+        "requestedAt": { "type": "string" },
+        "status": { "type": "string", "enum": ["na_fila", "tocando", "atendido"] }
+      },
+      "required": ["listenerName", "songTitle", "requestedAt", "status"]
+    },
+    "PodcastEpisode": {
+      "title": "PodcastEpisode",
+      "description": "Audio sermon or podcast episode",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "speaker": { "type": "string" },
+        "speakerRole": { "type": "string" },
+        "date": { "type": "string" },
+        "duration": { "type": "string" },
+        "audioUrl": { "type": "string" },
+        "coverImage": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" }
+      },
+      "required": ["title", "audioUrl", "speaker"]
+    },
+    "ContactMessage": {
+      "title": "ContactMessage",
+      "description": "Contact form submission message",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "sentAt": { "type": "string" },
+        "status": { "type": "string", "enum": ["nova", "lida", "respondida"] }
+      },
+      "required": ["name", "email", "subject", "message", "sentAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/prayerRequests/{requestId}": {
+      "schema": "PrayerRequest",
+      "description": "Prayer requests"
+    },
+    "/songRequests/{requestId}": {
+      "schema": "SongRequest",
+      "description": "Song requests queue"
+    },
+    "/podcasts/{podcastId}": {
+      "schema": "PodcastEpisode",
+      "description": "Recorded sermons and podcasts"
+    },
+    "/contactMessages/{messageId}": {
+      "schema": "ContactMessage",
+      "description": "Contact messages from listeners"
+    }
+  }
+}

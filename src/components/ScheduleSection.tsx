@@ -96,7 +96,7 @@ export const ScheduleSection: React.FC = () => {
   };
 
   return (
-    <section className="py-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="programacao" className="py-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-20">
       {/* Section Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>

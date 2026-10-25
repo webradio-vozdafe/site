@@ -111,6 +111,20 @@ export const Navbar: React.FC = () => {
                 </button>
               );
             })}
+
+            {isLoggedIn && (
+              <button
+                onClick={() => handleSelectTab('perfil')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeTab === 'perfil'
+                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-semibold'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <User className={`w-4 h-4 ${activeTab === 'perfil' ? 'text-slate-950' : 'text-amber-400'}`} />
+                <span>Perfil</span>
+              </button>
+            )}
           </nav>
 
           {/* Right Action buttons */}

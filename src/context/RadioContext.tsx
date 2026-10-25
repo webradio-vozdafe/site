@@ -174,7 +174,13 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return 0.85;
     }
   });
-  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('vozdafe_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [currentQuality, setCurrentQuality] = useState<StreamQuality>(STREAM_QUALITIES[0]);
   const [audioError, setAudioError] = useState<string | null>(null);
 
@@ -585,6 +591,15 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsPlaying(false);
       setIsLoading(false);
     };
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setIsLoading(false);
+      setActivePodcast(null);
+      if (audioRef.current) {
+        audioRef.current.src = effectiveStreamUrl;
+        audioRef.current.load();
+      }
+    };
     const handleError = () => {
       console.warn("Audio element error. Switching to fallback safe stream.");
       setIsLoading(false);
@@ -607,17 +622,19 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     audio.addEventListener('waiting', handleWaiting);
     audio.addEventListener('playing', handlePlaying);
     audio.addEventListener('pause', handlePause);
+    audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
     return () => {
       audio.removeEventListener('waiting', handleWaiting);
       audio.removeEventListener('playing', handlePlaying);
       audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
       audio.pause();
       audio.src = "";
     };
-  }, []);
+  }, [effectiveStreamUrl, isPlaying]);
 
   // Sleep timer ticker
   useEffect(() => {
@@ -673,6 +690,49 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  // Media Session API Sync (Lock screen & notifications)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
+
+    try {
+      const title = activePodcast
+        ? activePodcast.title
+        : (currentTrackInfo?.title || radioData?.musica_atual || 'Transmissão Ao Vivo');
+      const artist = activePodcast
+        ? activePodcast.preacher
+        : (currentTrackInfo?.artist || radioData?.titulo || RADIO_STATION.name);
+      const album = activePodcast
+        ? 'Ministração da Palavra'
+        : (currentShow?.title || RADIO_STATION.slogan);
+      const artworkSrc = activePodcast?.coverImage || radioData?.capa_musica || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=512&auto=format&fit=crop&q=80';
+
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title,
+        artist,
+        album,
+        artwork: [
+          { src: artworkSrc, sizes: '96x96', type: 'image/jpeg' },
+          { src: artworkSrc, sizes: '128x128', type: 'image/jpeg' },
+          { src: artworkSrc, sizes: '192x192', type: 'image/jpeg' },
+          { src: artworkSrc, sizes: '256x256', type: 'image/jpeg' },
+          { src: artworkSrc, sizes: '384x384', type: 'image/jpeg' },
+          { src: artworkSrc, sizes: '512x512', type: 'image/jpeg' }
+        ]
+      });
+
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+
+      navigator.mediaSession.setActionHandler('play', () => {
+        if (!isPlaying) togglePlay();
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        if (isPlaying) togglePlay();
+      });
+    } catch {
+      // Safe fallback for partial mediaSession support
+    }
+  }, [isPlaying, activePodcast, currentTrackInfo, currentShow, radioData]);
+
   const retryPlayback = () => {
     if (!audioRef.current) return;
     setAudioError(null);
@@ -699,11 +759,24 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     if (vol > 0 && isMuted) {
       setIsMuted(false);
+      try {
+        localStorage.setItem('vozdafe_muted', 'false');
+      } catch {
+        // safe fallback
+      }
     }
   };
 
   const toggleMute = () => {
-    setIsMuted(!isMuted);
+    setIsMuted(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('vozdafe_muted', next.toString());
+      } catch {
+        // safe fallback
+      }
+      return next;
+    });
   };
 
   const setQuality = (quality: StreamQuality) => {
@@ -802,9 +875,18 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     try {
       await updateDoc(prayerRef, {
-        hasUserPrayed: !prayer.hasUserPrayed,
-        prayersCount: !prayer.hasUserPrayed ? prayer.prayersCount + 1 : Math.max(0, prayer.prayersCount - 1)
+        prayersCount: (prayer.prayersCount || 0) + 1
       });
+      try {
+        confetti({
+          particleCount: 25,
+          spread: 50,
+          origin: { y: 0.8 },
+          colors: ['#e6b86b', '#f7f5ef', '#102b28']
+        });
+      } catch {
+        // ignore
+      }
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `prayerRequests/${id}`);
     }

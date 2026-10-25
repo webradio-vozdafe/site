@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   HeartHandshake,
   Heart,
@@ -20,6 +20,33 @@ export const PrayerWallSection: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
+  const [visibleCount, setVisibleCount] = useState<number>(6);
+
+  // Reset pagination on category or search filter changes
+  useEffect(() => {
+    setVisibleCount(6);
+  }, [selectedCategory, searchTerm]);
+
+  const [prayedIds, setPrayedIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('vozdafe_prayed_ids');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handlePray = (id: string) => {
+    if (prayedIds.includes(id)) return;
+    const next = [...prayedIds, id];
+    setPrayedIds(next);
+    try {
+      localStorage.setItem('vozdafe_prayed_ids', JSON.stringify(next));
+    } catch {
+      // safe fallback
+    }
+    prayForRequest(id);
+  };
 
   // New prayer form fields
   const [authorName, setAuthorName] = useState('');
@@ -47,6 +74,9 @@ export const PrayerWallSection: React.FC = () => {
       req.city.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
+
+  const visibleRequests = filteredRequests.slice(0, visibleCount);
+  const remainingCount = filteredRequests.length - visibleCount;
 
   const totalIntercessions = prayerRequests.reduce((acc, curr) => acc + curr.prayersCount, 0);
 
@@ -93,7 +123,7 @@ export const PrayerWallSection: React.FC = () => {
   };
 
   return (
-    <section className="py-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="oracao" className="py-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-20">
       {/* Header and stats */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
         <div>
@@ -180,7 +210,7 @@ export const PrayerWallSection: React.FC = () => {
 
       {/* Prayer Request Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filteredRequests.map((req) => (
+        {visibleRequests.map((req) => (
           <div
             key={req.id}
             className={`rounded-2xl border p-5 transition-all duration-300 flex flex-col justify-between ${
@@ -232,17 +262,24 @@ export const PrayerWallSection: React.FC = () => {
                 </span>
               </div>
 
-              <button
-                onClick={() => prayForRequest(req.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-sm ${
-                  req.hasUserPrayed
-                    ? 'bg-amber-500 text-slate-950 font-bold shadow-amber-500/30'
-                    : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
-                }`}
-              >
-                <Heart className={`w-3.5 h-3.5 ${req.hasUserPrayed ? 'fill-current text-slate-950' : 'text-amber-400'}`} />
-                <span>{req.hasUserPrayed ? 'Oração Feita (Amém!)' : 'Estou Orando'}</span>
-              </button>
+              {(() => {
+                const hasPrayed = prayedIds.includes(req.id);
+                return (
+                  <button
+                    type="button"
+                    onClick={() => handlePray(req.id)}
+                    disabled={hasPrayed}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-sm ${
+                      hasPrayed
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold cursor-default'
+                        : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 cursor-pointer active:scale-95'
+                    }`}
+                  >
+                    <Heart className={`w-3.5 h-3.5 ${hasPrayed ? 'fill-current text-amber-400' : 'text-amber-400'}`} />
+                    <span>{hasPrayed ? 'Oração Feita (Amém!)' : 'Estou Orando'}</span>
+                  </button>
+                );
+              })()}
             </div>
           </div>
         ))}
@@ -259,6 +296,23 @@ export const PrayerWallSection: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Load More Button */}
+      {remainingCount > 0 && (
+        <div className="mt-8 text-center animate-in fade-in">
+          <button
+            type="button"
+            onClick={() => setVisibleCount((prev) => prev + 6)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-amber-500/40 bg-slate-900/90 hover:bg-slate-800 text-amber-300 hover:text-amber-200 text-xs font-bold transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95"
+            title="Carregar mais pedidos de oração"
+          >
+            <span>Carregar mais pedidos de oração</span>
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-[11px] text-amber-300 font-mono">
+              +{remainingCount}
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* New Prayer Request Modal */}
       {isFormOpen && (

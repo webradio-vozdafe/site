@@ -1,17 +1,38 @@
-# Especificação de Finalizações (Spec)
+# Especificação Técnica de Finalizações (Spec)
 
-**Data de geração:** 21/10/2026 22:17 (Horário de Brasília)
+**Data e Hora de Geração:** 25/10/2026 17:55 (Horário de Brasília)
 
-Esta especificação aborda exclusivamente o que falta implementar (page, behavior, component) com base no relatório de análise do sistema, sem introduzir novas funcionalidades.
+Esta especificação detalha os componentes, comportamentos e páginas que demandam finalização, com base no relatório `analytics/report.md`.
 
-## 1. Behavior: Sincronização em Segundo Plano (Service Worker)
-- **Escopo**: Adicionar suporte a eventos de `sync` e manipulação de push notifications no arquivo `/public/sw.js` para garantir funcionamento de lembretes de programação offline.
+---
 
-## 2. Component: Indicador de Conectividade (Network Status)
-- **Escopo**: Criar componente indicador visual de status de rede (Online/Offline) integrando eventos do navegador (`online`/`offline`) na interface do painel e player.
+## 1. Behavior / API: Integração com a Media Session API
+- **Arquivo Alvo:** `src/context/RadioContext.tsx`
+- **Classificação:** Behavior / API
+- **Especificação:**
+  - Verificar a existência de `'mediaSession' in navigator`.
+  - Configurar `navigator.mediaSession.metadata` sempre que `currentTrackInfo`, `currentShow` ou `radioData` forem atualizados, com `title`, `artist`, `album` e `artwork`.
+  - Definir os manipuladores de ação (`setActionHandler`) para `'play'` e `'pause'`, conectando-os ao método `togglePlay()`.
 
-## 3. Behavior / Component: Acessibilidade e Gestão de Foco em Modais
-- **Escopo**: Implementar foco gerenciado (focus trap / ARIA attributes) em modais (como `SleepTimerModal`, popovers e abas do `ControlPanel`) para leitores de tela e navegação estrita por teclado.
+## 2. Behavior / Component: Ciclo de Vida do Podcast (`onEnded`)
+- **Arquivo Alvo:** `src/context/RadioContext.tsx`
+- **Classificação:** Behavior
+- **Especificação:**
+  - Adicionar listener para o evento `'ended'` no elemento de áudio gerenciado.
+  - Quando disparado durante a reprodução de um podcast, redefinir `activePodcast` para `null` e reconfigurar a fonte para o streaming ao vivo (`effectiveStreamUrl`), mantendo o estado de reprodução pausado.
 
-## 4. Component: Métricas de Latência de Stream no Painel Administrativo
-- **Escopo**: Adicionar widget de monitoramento de latência e status de bitrate ativo no painel de controle do estúdio (`ControlPanel.tsx`).
+## 3. Component / Performance: Paginação Suave no Mural de Orações
+- **Arquivo Alvo:** `src/components/PrayerWallSection.tsx`
+- **Classificação:** Component / Performance
+- **Especificação:**
+  - Introduzir estado `visibleCount` com valor inicial de `6`.
+  - Exibir botão "Carregar Mais Pedidos" quando `filteredRequests.length > visibleCount`.
+  - Ao clicar, incrementar `visibleCount` em `6` pedidos. Resetar `visibleCount` para `6` ao alternar a categoria ou modificar o termo de busca.
+
+## 4. Component / Feedback: Indicação Visual no Soundboard do Estúdio
+- **Arquivo Alvo:** `src/components/ControlPanel.tsx`
+- **Classificação:** Component / Feedback
+- **Especificação:**
+  - Criar estado `activeSoundboardEffect: string | null`.
+  - Ao acionar `playSoundEffect(type)`, definir o estado com o tipo correspondente e agendar a limpeza para o tempo exato de duração do efeito sonoro.
+  - Aplicar classes de realce com brilho dourado e escala suave no botão ativo.

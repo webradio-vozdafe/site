@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, ChevronUp, Sliders } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, ChevronUp, Sliders, Moon } from 'lucide-react';
 import { useRadio } from '../context/RadioContext';
 import { auth } from '../lib/firebase';
 
@@ -15,7 +15,9 @@ export const MiniBottomPlayer: React.FC = () => {
     currentShow,
     currentTrackInfo,
     setIsControlPanelOpen,
-    radioData
+    radioData,
+    sleepTimerRemainingSec,
+    setSleepTimer
   } = useRadio();
 
   const [showMiniPlayer, setShowMiniPlayer] = useState(false);
@@ -59,7 +61,7 @@ export const MiniBottomPlayer: React.FC = () => {
         padding: '10px 16px',
         color: '#fffefa'
       }}
-      className="animate-in slide-in-from-bottom-4 duration-300"
+      className="studio-floating-panel"
     >
       <div className="wrap flex items-center justify-between gap-4">
         {/* Left: Indicator & Program */}
@@ -175,6 +177,27 @@ export const MiniBottomPlayer: React.FC = () => {
               style={{ width: '70px', height: '4px', accentColor: 'var(--gold)', cursor: 'pointer' }}
             />
           </div>
+
+          {/* Active Sleep Timer Indicator */}
+          {sleepTimerRemainingSec && sleepTimerRemainingSec > 0 && (
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-mono font-bold"
+              title="Temporizador de Sono ativo"
+            >
+              <Moon className="w-3.5 h-3.5 text-amber-400" />
+              <span>
+                {Math.floor(sleepTimerRemainingSec / 60)}:{(sleepTimerRemainingSec % 60).toString().padStart(2, '0')}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSleepTimer(null)}
+                className="text-amber-400 hover:text-white ml-0.5 cursor-pointer font-sans text-[10px]"
+                title="Desativar temporizador de sono"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           {isLoggedIn && (
             <button

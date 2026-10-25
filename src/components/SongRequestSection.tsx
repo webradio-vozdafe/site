@@ -25,15 +25,17 @@ export const SongRequestSection: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!songTitle.trim() || !listenerName.trim()) return;
+    const trimmedTitle = songTitle.trim();
+    const trimmedListener = listenerName.trim();
+    if (!trimmedTitle || !trimmedListener) return;
 
     addSongRequest({
-      listenerName: listenerName.trim(),
-      city: city.trim() || 'Brasil',
-      songTitle: songTitle.trim(),
-      artist: artist.trim() || 'Cantor Gospel',
-      dedicationTo: dedicationTo.trim() || 'Todos os ouvintes',
-      message: message.trim() || undefined
+      listenerName: trimmedListener.slice(0, 100),
+      city: (city.trim() || 'Brasil').slice(0, 60),
+      songTitle: trimmedTitle.slice(0, 80),
+      artist: (artist.trim() || 'Cantor Gospel').slice(0, 80),
+      dedicationTo: (dedicationTo.trim() || 'Todos os ouvintes').slice(0, 100),
+      message: message.trim() ? message.trim().slice(0, 500) : undefined
     });
 
     setIsSuccess(true);

@@ -34,7 +34,8 @@ import {
   X,
   Send,
   Inbox,
-  LogOut
+  LogOut,
+  User
 } from 'lucide-react';
 import { useRadio } from '../context/RadioContext';
 import { auth } from '../lib/firebase';
@@ -116,8 +117,19 @@ export const ControlPanel: React.FC = () => {
     setTimeout(() => setPanelToast(null), 3800);
   };
 
+  // Soundboard active effect state for visual indicator
+  const [activeSoundboardEffect, setActiveSoundboardEffect] = useState<string | null>(null);
+  const soundboardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Soundboard Web Audio synthesis
   const playSoundEffect = (type: 'vinheta' | 'hora' | 'clamor' | 'gloria' | 'alerta') => {
+    setActiveSoundboardEffect(type);
+    if (soundboardTimeoutRef.current) clearTimeout(soundboardTimeoutRef.current);
+    const durationMs = type === 'hora' ? 2500 : type === 'clamor' ? 2600 : type === 'vinheta' ? 2000 : 1600;
+    soundboardTimeoutRef.current = setTimeout(() => {
+      setActiveSoundboardEffect(null);
+    }, durationMs);
+
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const ctx = new AudioCtx();
@@ -256,6 +268,7 @@ export const ControlPanel: React.FC = () => {
   const [prayerCat, setPrayerCat] = useState('Todas');
   const [isPrayerModalOpen, setIsPrayerModalOpen] = useState(false);
   const [isPrayerScriptModalOpen, setIsPrayerScriptModalOpen] = useState(false);
+  const [scriptCategoryFilter, setScriptCategoryFilter] = useState('Todas');
   const [editingPrayerId, setEditingPrayerId] = useState<string | null>(null);
   const [prayerAuthor, setPrayerAuthor] = useState('');
   const [prayerCity, setPrayerCity] = useState('');
@@ -586,13 +599,19 @@ export const ControlPanel: React.FC = () => {
     }
   };
 
-  // Compile prayer script for announcer
-  const prayerScriptText = filteredPrayers
-    .map(
-      (p, idx) =>
-        `${idx + 1}. ${p.authorName} (${p.city}/${p.state}) - Motivo: ${p.category}\n"${p.content}"\n`
-    )
-    .join('\n');
+  // Compile prayer script for announcer with category filter
+  const scriptPrayers = scriptCategoryFilter === 'Todas'
+    ? filteredPrayers
+    : filteredPrayers.filter((p) => p.category === scriptCategoryFilter);
+
+  const prayerScriptText = scriptPrayers.length > 0
+    ? scriptPrayers
+        .map(
+          (p, idx) =>
+            `${idx + 1}. ${p.authorName} (${p.city}/${p.state}) — Motivo: ${p.category}\n"${p.content}"\n`
+        )
+        .join('\n')
+    : `Nenhum pedido de oração encontrado para a categoria "${scriptCategoryFilter}".`;
 
   return (
     <div
@@ -602,7 +621,7 @@ export const ControlPanel: React.FC = () => {
         color: '#fffefa',
         fontFamily: 'var(--sans)'
       }}
-      className="pb-24"
+      className="pb-24 studio-floating-panel"
     >
       {/* Toast Notification */}
       {panelToast && (
@@ -745,6 +764,20 @@ export const ControlPanel: React.FC = () => {
                 Visão do Ouvinte
               </button>
               <button
+                type="button"
+                onClick={() => {
+                  setIsControlPanelOpen(false);
+                  setActiveTab('perfil');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="px-3 py-2 rounded bg-amber-950/70 hover:bg-amber-900 border border-amber-700 text-amber-200 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                style={{ minHeight: '38px' }}
+                title="Acessar página de perfil"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Perfil</span>
+              </button>
+              <button
                 onClick={async () => {
                   await signOut(auth);
                   setIsControlPanelOpen(false);
@@ -810,6 +843,34 @@ export const ControlPanel: React.FC = () => {
               </button>
             );
           })}
+
+          {/* Link para a página de perfil */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsControlPanelOpen(false);
+              setActiveTab('perfil');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            style={{
+              padding: '7px 13px',
+              borderRadius: '5px',
+              background: 'rgba(230, 184, 107, 0.15)',
+              color: 'var(--gold)',
+              fontWeight: 700,
+              border: '1px solid rgba(230, 184, 107, 0.4)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.15s ease',
+              marginLeft: 'auto'
+            }}
+            title="Acessar página de perfil"
+          >
+            <User className="w-3.5 h-3.5" />
+            <span>Meu Perfil</span>
+          </button>
         </div>
       </div>
 
@@ -1324,40 +1385,92 @@ export const ControlPanel: React.FC = () => {
                 </span>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <button
+                    type="button"
                     onClick={() => playSoundEffect('vinheta')}
-                    className="p-3 rounded bg-[rgba(16,43,40,0.85)] border border-[rgba(230,184,107,0.3)] hover:border-[var(--gold)] text-left cursor-pointer group"
+                    className={`p-3 rounded border text-left cursor-pointer group transition-all ${
+                      activeSoundboardEffect === 'vinheta'
+                        ? 'bg-[var(--gold)]/20 border-[var(--gold)] shadow-lg shadow-amber-500/20 scale-[1.02]'
+                        : 'bg-[rgba(16,43,40,0.85)] border-[rgba(230,184,107,0.3)] hover:border-[var(--gold)]'
+                    }`}
                   >
-                    <span className="text-[10px] text-[var(--gold)] font-bold block mb-1">VINHETA 01</span>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-[var(--gold)] font-bold block">VINHETA 01</span>
+                      {activeSoundboardEffect === 'vinheta' && (
+                        <span className="text-[9px] font-bold text-amber-300 flex items-center gap-1 font-mono">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                          NO AR
+                        </span>
+                      )}
+                    </div>
                     <strong className="text-white block group-hover:text-[var(--gold)] transition-colors">
                       Vóz da Fé Oficial
                     </strong>
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => playSoundEffect('hora')}
-                    className="p-3 rounded bg-[rgba(16,43,40,0.85)] border border-[rgba(230,184,107,0.3)] hover:border-[var(--gold)] text-left cursor-pointer group"
+                    className={`p-3 rounded border text-left cursor-pointer group transition-all ${
+                      activeSoundboardEffect === 'hora'
+                        ? 'bg-sky-500/20 border-sky-400 shadow-lg shadow-sky-500/20 scale-[1.02]'
+                        : 'bg-[rgba(16,43,40,0.85)] border-[rgba(230,184,107,0.3)] hover:border-[var(--gold)]'
+                    }`}
                   >
-                    <span className="text-[10px] text-sky-400 font-bold block mb-1">HORA CERTA</span>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-sky-400 font-bold block">HORA CERTA</span>
+                      {activeSoundboardEffect === 'hora' && (
+                        <span className="text-[9px] font-bold text-sky-300 flex items-center gap-1 font-mono">
+                          <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping" />
+                          NO AR
+                        </span>
+                      )}
+                    </div>
                     <strong className="text-white block group-hover:text-sky-300 transition-colors">
                       Aviso de Horário
                     </strong>
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => playSoundEffect('clamor')}
-                    className="p-3 rounded bg-[rgba(16,43,40,0.85)] border border-[rgba(230,184,107,0.3)] hover:border-[var(--gold)] text-left cursor-pointer group"
+                    className={`p-3 rounded border text-left cursor-pointer group transition-all ${
+                      activeSoundboardEffect === 'clamor'
+                        ? 'bg-rose-500/20 border-rose-400 shadow-lg shadow-rose-500/20 scale-[1.02]'
+                        : 'bg-[rgba(16,43,40,0.85)] border-[rgba(230,184,107,0.3)] hover:border-[var(--gold)]'
+                    }`}
                   >
-                    <span className="text-[10px] text-rose-400 font-bold block mb-1">MOMENTO DE ORAÇÃO</span>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-rose-400 font-bold block">MOMENTO DE ORAÇÃO</span>
+                      {activeSoundboardEffect === 'clamor' && (
+                        <span className="text-[9px] font-bold text-rose-300 flex items-center gap-1 font-mono">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />
+                          NO AR
+                        </span>
+                      )}
+                    </div>
                     <strong className="text-white block group-hover:text-rose-300 transition-colors">
                       Fundo de Clamor
                     </strong>
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => playSoundEffect('gloria')}
-                    className="p-3 rounded bg-[rgba(16,43,40,0.85)] border border-[rgba(230,184,107,0.3)] hover:border-[var(--gold)] text-left cursor-pointer group"
+                    className={`p-3 rounded border text-left cursor-pointer group transition-all ${
+                      activeSoundboardEffect === 'gloria'
+                        ? 'bg-emerald-500/20 border-emerald-400 shadow-lg shadow-emerald-500/20 scale-[1.02]'
+                        : 'bg-[rgba(16,43,40,0.85)] border-[rgba(230,184,107,0.3)] hover:border-[var(--gold)]'
+                    }`}
                   >
-                    <span className="text-[10px] text-emerald-400 font-bold block mb-1">CELEBRAÇÃO</span>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-emerald-400 font-bold block">CELEBRAÇÃO</span>
+                      {activeSoundboardEffect === 'gloria' && (
+                        <span className="text-[9px] font-bold text-emerald-300 flex items-center gap-1 font-mono">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                          NO AR
+                        </span>
+                      )}
+                    </div>
                     <strong className="text-white block group-hover:text-emerald-300 transition-colors">
                       Glória a Deus & Amém
                     </strong>
@@ -2514,8 +2627,26 @@ export const ControlPanel: React.FC = () => {
               </button>
             </div>
 
+            {/* Category Filter for Altar Script */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 p-2.5 rounded bg-[rgba(16,43,40,0.06)] border border-[#dedfd6]">
+              <span className="text-xs font-bold text-[#48564e]">
+                Filtrar Clamor por Categoria:
+              </span>
+              <select
+                value={scriptCategoryFilter}
+                onChange={(e) => setScriptCategoryFilter(e.target.value)}
+                className="px-3 py-1.5 rounded border border-[#dedfd6] bg-white text-xs font-semibold text-[var(--forest)] outline-none cursor-pointer"
+              >
+                {['Todas', 'Saúde', 'Família', 'Vida Espiritual', 'Finanças', 'Causas Urgentes', 'Gratidão'].map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <p className="text-xs text-[var(--muted)] mb-3">
-              Lista formatada com os {filteredPrayers.length} pedidos atuais prontos para leitura no microfone durante o momento devocional.
+              Lista formatada com {scriptPrayers.length} {scriptCategoryFilter === 'Todas' ? 'pedidos' : `pedidos da categoria "${scriptCategoryFilter}"`} prontos para leitura no microfone durante o momento devocional.
             </p>
 
             <textarea

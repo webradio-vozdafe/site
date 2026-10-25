@@ -13,7 +13,8 @@ import {
   AlertCircle,
   Share2,
   Sliders,
-  X
+  X,
+  Download
 } from 'lucide-react';
 import { DAILY_VERSES, RADIO_STATION, STREAM_QUALITIES } from './data/radioData';
 import { PrayerRequest } from './types';
@@ -47,6 +48,7 @@ const MainView: React.FC = () => {
     currentTrackInfo,
     currentShow,
     sleepTimerRemainingSec,
+    setSleepTimer,
     addPrayerRequest,
     addContactMessage,
     verses,
@@ -63,6 +65,112 @@ const MainView: React.FC = () => {
     return auth.onAuthStateChanged((user) => setIsLoggedIn(!!user));
   }, []);
 
+  // Network Connectivity State & Auto Reconnect
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  // Hash Navigation Sync & Smooth Scrolling
+  useEffect(() => {
+    const handleHashSync = () => {
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      if (!hash) return;
+
+      // Studio Modal
+      if (['estudio', 'painel', 'admin'].includes(hash)) {
+        if (isLoggedIn) setIsControlPanelOpen(true);
+        return;
+      }
+
+      // Login / Profile dedicated views
+      if (['login', '/login'].includes(hash)) {
+        setActiveTab('login');
+        return;
+      }
+      if (['perfil', 'minha-conta'].includes(hash)) {
+        setActiveTab('perfil');
+        return;
+      }
+
+      // Main single page sections
+      const sectionTargets: { [key: string]: string } = {
+        'inicio': 'inicio',
+        'ao-vivo': 'inicio',
+        'home': 'inicio',
+        'tocando-agora': 'tocando-agora',
+        'musica': 'tocando-agora',
+        'programacao': 'programacao',
+        'grade': 'programacao',
+        'mensagem': 'mensagem',
+        'palavra': 'mensagem',
+        'versiculo': 'mensagem',
+        'oracao': 'oracao',
+        'mural': 'oracao',
+        'pedidos': 'oracao',
+        'contato': 'contato',
+        'fale-conosco': 'contato'
+      };
+
+      const targetId = sectionTargets[hash];
+      if (targetId) {
+        setActiveTab('ao-vivo');
+        setTimeout(() => {
+          const el = document.getElementById(targetId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else if (targetId === 'inicio') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }, 80);
+      }
+    };
+
+    handleHashSync();
+    window.addEventListener('hashchange', handleHashSync);
+    return () => window.removeEventListener('hashchange', handleHashSync);
+  }, [isLoggedIn, setActiveTab, setIsControlPanelOpen]);
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    e.preventDefault();
+    if (activeTab !== 'ao-vivo') {
+      setActiveTab('ao-vivo');
+    }
+    window.history.pushState(null, '', `#${targetId}`);
+    setTimeout(() => {
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (targetId === 'inicio') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 60);
+  };
+
+
+  // PWA Install Prompt state
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    try {
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        showNotice('Aplicativo instalado com sucesso!');
+      }
+    } catch {
+      // Ignored
+    }
+    setDeferredPrompt(null);
+  };
 
   const handleOpenStudio = () => {
     if (isLoggedIn) {
@@ -109,6 +217,29 @@ const MainView: React.FC = () => {
   const [contactSubject, setContactSubject] = useState('Pedido de oração');
   const [contactMessage, setContactMessage] = useState('');
   const [contactStatus, setContactStatus] = useState('');
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
+  const [isSubmittingPrayer, setIsSubmittingPrayer] = useState(false);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      showNotice('Conexão restabelecida! Sintonizando...');
+      if (isPlaying || audioError) {
+        retryPlayback();
+      }
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      showNotice('Você está sem conexão com a internet.');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [isPlaying, audioError, retryPlayback]);
 
   // If control panel is open, render ControlPanel view
   if (isControlPanelOpen) {
@@ -123,67 +254,87 @@ const MainView: React.FC = () => {
     return <ProfileView />;
   }
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!contactName.trim() || !contactMessage.trim()) return;
+    const trimmedName = contactName.trim();
+    const trimmedMessage = contactMessage.trim();
+    const trimmedEmail = contactEmail.trim();
 
-    if (contactSubject === 'Pedido de oração') {
-      addPrayerRequest({
-        authorName: contactName,
-        city: 'Online',
-        state: 'BR',
-        category: 'Saúde',
-        content: contactMessage
+    if (!trimmedName || !trimmedMessage || isSubmittingContact) return;
+    setIsSubmittingContact(true);
+
+    try {
+      if (contactSubject === 'Pedido de oração') {
+        addPrayerRequest({
+          authorName: trimmedName.slice(0, 100),
+          city: 'Online',
+          state: 'BR',
+          category: 'Saúde',
+          content: trimmedMessage.slice(0, 500)
+        });
+        setContactStatus('Seu pedido de oração foi recebido e colocado diante do altar!');
+      } else {
+        setContactStatus('Mensagem preparada para envio!');
+      }
+
+      addContactMessage({
+        name: trimmedName.slice(0, 100),
+        email: (trimmedEmail || 'ouvinte@vozdafe.radio.br').slice(0, 100),
+        subject: contactSubject,
+        message: trimmedMessage.slice(0, 500)
       });
-      setContactStatus('Seu pedido de oração foi recebido e colocado diante do altar!');
-    } else {
-      setContactStatus('Mensagem preparada para envio!');
+
+      // Trigger standard mailto protocol
+      const subjectLine = `${contactSubject} — VÓZ DA FÉ`;
+      const emailBody = `Nome: ${trimmedName}\nE-mail: ${trimmedEmail}\nAssunto: ${contactSubject}\n\nMensagem:\n${trimmedMessage}`;
+      window.location.href = `mailto:${RADIO_STATION.email}?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(emailBody)}`;
+
+      showNotice(`Obrigado, ${trimmedName}! Mensagem direcionada para o estúdio.`);
+      setTimeout(() => {
+        setContactName('');
+        setContactEmail('');
+        setContactMessage('');
+        setContactStatus('');
+        setIsSubmittingContact(false);
+      }, 3500);
+    } catch {
+      setIsSubmittingContact(false);
     }
-
-    addContactMessage({
-      name: contactName.trim(),
-      email: contactEmail.trim() || 'ouvinte@vozdafe.radio.br',
-      subject: contactSubject,
-      message: contactMessage.trim()
-    });
-
-    // Trigger standard mailto protocol
-    const subjectLine = `${contactSubject} — VÓZ DA FÉ`;
-    const emailBody = `Nome: ${contactName}\nE-mail: ${contactEmail}\nAssunto: ${contactSubject}\n\nMensagem:\n${contactMessage}`;
-    window.location.href = `mailto:${RADIO_STATION.email}?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(emailBody)}`;
-
-    showNotice(`Obrigado, ${contactName}! Mensagem direcionada para o estúdio.`);
-    setTimeout(() => {
-      setContactName('');
-      setContactEmail('');
-      setContactMessage('');
-      setContactStatus('');
-    }, 4500);
   };
 
   const handleWhatsAppDirect = () => {
-    const text = `*Contato Vóz da Fé*\nNome: ${contactName || 'Ouvinte'}\nAssunto: ${contactSubject}\n\nMensagem:\n${contactMessage || 'Paz do Senhor!'}`;
+    const text = `*Contato Vóz da Fé*\nNome: ${(contactName || 'Ouvinte').trim()}\nAssunto: ${contactSubject}\n\nMensagem:\n${(contactMessage || 'Paz do Senhor!').trim()}`;
     window.open(`https://wa.me/5511987654321?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   };
 
-  const handlePrayerSubmit = (e: React.FormEvent) => {
+  const handlePrayerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAuthor.trim() || !newContent.trim()) return;
+    const trimmedAuthor = newAuthor.trim();
+    const trimmedContent = newContent.trim();
+    const trimmedCity = newCity.trim();
+    const trimmedState = newState.trim().toUpperCase();
 
-    addPrayerRequest({
-      authorName: newAuthor.trim(),
-      city: newCity.trim() || 'Brasil',
-      state: newState.trim() || 'BR',
-      category: newCategory,
-      content: newContent.trim()
-    });
+    if (!trimmedAuthor || !trimmedContent || isSubmittingPrayer) return;
+    setIsSubmittingPrayer(true);
 
-    setPrayerModalOpen(false);
-    showNotice(`Pedido de oração de ${newAuthor} apresentado com sucesso!`);
-    setNewAuthor('');
-    setNewCity('');
-    setNewState('');
-    setNewContent('');
+    try {
+      addPrayerRequest({
+        authorName: trimmedAuthor.slice(0, 100),
+        city: (trimmedCity || 'Brasil').slice(0, 60),
+        state: (trimmedState || 'BR').slice(0, 2),
+        category: newCategory,
+        content: trimmedContent.slice(0, 500)
+      });
+
+      setPrayerModalOpen(false);
+      showNotice(`Pedido de oração de ${trimmedAuthor} apresentado com sucesso!`);
+      setNewAuthor('');
+      setNewCity('');
+      setNewState('');
+      setNewContent('');
+    } finally {
+      setIsSubmittingPrayer(false);
+    }
   };
 
   const handleCopyVerse = () => {
@@ -241,10 +392,44 @@ const MainView: React.FC = () => {
     <>
       <a className="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
+      {/* Offline Connectivity Warning Banner */}
+      {!isOnline && (
+        <div
+          role="alert"
+          className="sticky top-0 z-50 bg-amber-950/95 border-b border-amber-600 text-amber-200 px-4 py-2.5 text-xs flex items-center justify-between shadow-lg"
+        >
+          <div className="flex items-center gap-2 max-w-7xl mx-auto w-full justify-between">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+              <strong>Você está offline:</strong> Algumas funções podem estar indisponíveis até a conexão retornar.
+            </span>
+            <button
+              onClick={() => {
+                if (navigator.onLine) {
+                  setIsOnline(true);
+                  retryPlayback();
+                  showNotice('Conexão restabelecida!');
+                } else {
+                  showNotice('Ainda sem conexão com a internet.');
+                }
+              }}
+              className="px-2.5 py-1 rounded bg-amber-800 hover:bg-amber-700 text-amber-100 font-bold text-[11px] cursor-pointer"
+            >
+              Verificar agora
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Top Hero Shell */}
       <div className="hero-shell">
         <header className="header wrap">
-          <a className="brand" href="#inicio" aria-label="VÓZ DA FÉ — início">
+          <a
+            className="brand"
+            href="#inicio"
+            aria-label="VÓZ DA FÉ — início"
+            onClick={(e) => handleNavClick(e, 'inicio')}
+          >
             <svg className="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
               <path d="M24 15v21M17 22h14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
               <path d="M12 15a17 17 0 0 0 0 18M36 15a17 17 0 0 1 0 18M7 10a24 24 0 0 0 0 28M41 10a24 24 0 0 1 0 28" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity=".75" />
@@ -253,12 +438,25 @@ const MainView: React.FC = () => {
           </a>
 
           <nav className="nav" id="site-nav" aria-label="Navegação principal">
-            <a href="#tocando-agora">Tocando Agora</a>
-            <a href="#programacao">Programação</a>
-            <a href="#mensagem">Palavra do dia</a>
-            <a href="#oracao">Mural de Oração</a>
-            <a href="#contato">Contato</a>
+            <a href="#inicio" onClick={(e) => handleNavClick(e, 'inicio')}>Início</a>
+            <a href="#tocando-agora" onClick={(e) => handleNavClick(e, 'tocando-agora')}>Tocando Agora</a>
+            <a href="#programacao" onClick={(e) => handleNavClick(e, 'programacao')}>Programação</a>
+            <a href="#mensagem" onClick={(e) => handleNavClick(e, 'mensagem')}>Palavra do Dia</a>
+            <a href="#oracao" onClick={(e) => handleNavClick(e, 'oracao')}>Mural de Oração</a>
+            <a href="#contato" onClick={(e) => handleNavClick(e, 'contato')}>Contato</a>
             
+            {deferredPrompt && (
+              <button
+                type="button"
+                onClick={handleInstallApp}
+                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-amber-500/50 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 text-xs font-semibold cursor-pointer transition-all"
+                title="Instalar aplicativo da rádio no seu dispositivo"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Instalar App</span>
+              </button>
+            )}
+
             <button
               className="nav-live"
               type="button"
@@ -309,7 +507,11 @@ const MainView: React.FC = () => {
                   )}
                 </button>
 
-                <a className="text-link" href="#programacao">
+                <a
+                  className="text-link"
+                  href="#programacao"
+                  onClick={(e) => handleNavClick(e, 'programacao')}
+                >
                   Conheça a programação <span aria-hidden="true">→</span>
                 </a>
 
@@ -455,22 +657,32 @@ const MainView: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Sleep Timer Trigger */}
-                  <button
-                    onClick={() => setSleepModalOpen(true)}
-                    className="p-1 rounded text-slate-300 hover:text-white cursor-pointer"
-                    title={
-                      sleepTimerRemainingSec !== null
-                        ? `Desligamento em ${formatRemainingTimer(sleepTimerRemainingSec)}`
-                        : 'Programar desligamento'
-                    }
-                  >
-                    <Moon
-                      className={`w-3.5 h-3.5 ${
-                        sleepTimerRemainingSec !== null ? 'text-amber-300 fill-amber-300' : 'text-[var(--gold)]'
-                      }`}
-                    />
-                  </button>
+                  {/* Sleep Timer Trigger & Active Countdown Badge */}
+                  {sleepTimerRemainingSec !== null && sleepTimerRemainingSec > 0 ? (
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono text-[10px] font-bold">
+                      <Moon className="w-3 h-3 fill-amber-300" />
+                      <span>{formatRemainingTimer(sleepTimerRemainingSec)}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSleepTimer(null);
+                          showNotice('Temporizador de sono cancelado.');
+                        }}
+                        className="text-amber-400 hover:text-white ml-0.5 cursor-pointer text-[10px]"
+                        title="Cancelar temporizador"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setSleepModalOpen(true)}
+                      className="p-1 rounded text-slate-300 hover:text-white cursor-pointer"
+                      title="Programar desligamento automático (Sleep Timer)"
+                    >
+                      <Moon className="w-3.5 h-3.5 text-[var(--gold)]" />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -667,6 +879,7 @@ const MainView: React.FC = () => {
                   id="contact-name"
                   name="name"
                   type="text"
+                  maxLength={100}
                   autoComplete="name"
                   placeholder="Como podemos chamar você?"
                   required
@@ -680,6 +893,7 @@ const MainView: React.FC = () => {
                   id="contact-email"
                   name="email"
                   type="email"
+                  maxLength={100}
                   autoComplete="email"
                   placeholder="voce@exemplo.com"
                   required
@@ -711,6 +925,7 @@ const MainView: React.FC = () => {
               <textarea
                 id="contact-message"
                 name="message"
+                maxLength={500}
                 placeholder="Escreva sua mensagem aqui..."
                 required
                 value={contactMessage}
@@ -732,8 +947,14 @@ const MainView: React.FC = () => {
                   <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
                   WhatsApp
                 </button>
-                <button className="button button-outline" type="submit">
-                  Preparar mensagem <span aria-hidden="true">→</span>
+                <button 
+                  className="button button-outline" 
+                  type="submit"
+                  disabled={isSubmittingContact}
+                >
+                  {isSubmittingContact ? 'Enviando...' : (
+                    <>Preparar mensagem <span aria-hidden="true">→</span></>
+                  )}
                 </button>
               </div>
             </div>
@@ -749,7 +970,11 @@ const MainView: React.FC = () => {
       {/* Footer */}
       <footer id="ao-vivo">
         <div className="footer-main wrap">
-          <a className="brand footer-brand" href="#inicio">
+          <a
+            className="brand footer-brand"
+            href="#inicio"
+            onClick={(e) => handleNavClick(e, 'inicio')}
+          >
             <svg className="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
               <path d="M24 15v21M17 22h14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
               <path d="M12 15a17 17 0 0 0 0 18M36 15a17 17 0 0 1 0 18M7 10a24 24 0 0 0 0 28M41 10a24 24 0 0 1 0 28" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity=".75" />
@@ -763,9 +988,12 @@ const MainView: React.FC = () => {
         <div className="footer-bottom wrap">
           <span>© {new Date().getFullYear()} VÓZ DA FÉ. Feita com fé e carinho.</span>
           <div className="social-links">
-            <a href="#contato">Contato</a>
-            <a href="#programacao">Programação</a>
-            <a href="#oracao">Oração</a>
+            <a href="#inicio" onClick={(e) => handleNavClick(e, 'inicio')}>Início</a>
+            <a href="#tocando-agora" onClick={(e) => handleNavClick(e, 'tocando-agora')}>No Ar</a>
+            <a href="#programacao" onClick={(e) => handleNavClick(e, 'programacao')}>Programação</a>
+            <a href="#mensagem" onClick={(e) => handleNavClick(e, 'mensagem')}>Palavra</a>
+            <a href="#oracao" onClick={(e) => handleNavClick(e, 'oracao')}>Oração</a>
+            <a href="#contato" onClick={(e) => handleNavClick(e, 'contato')}>Contato</a>
             {isLoggedIn && (
               <button
                 type="button"
@@ -773,7 +1001,7 @@ const MainView: React.FC = () => {
                 className="cursor-pointer text-inherit hover:text-[var(--gold)] transition-colors bg-transparent border-0 font-inherit p-0"
                 title="Acessar o Painel de Controle da Emissora"
               >
-                Painel de Controle
+                Painel do Estúdio
               </button>
             )}
           </div>
@@ -788,11 +1016,24 @@ const MainView: React.FC = () => {
         <button
           type="button"
           onClick={handleOpenStudio}
-          className="fixed bottom-6 left-6 z-40 hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-full border border-amber-500/50 bg-[#0c211f]/95 text-amber-300 hover:text-white hover:bg-[#102b28] shadow-xl backdrop-blur-md text-xs font-semibold cursor-pointer transition-all hover:scale-105 active:scale-95"
+          className="studio-floating-panel fixed bottom-6 left-6 z-40 hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-full border border-amber-500/50 bg-[#0c211f]/95 text-amber-300 hover:text-white hover:bg-[#102b28] shadow-xl backdrop-blur-md text-xs font-semibold cursor-pointer transition-all hover:scale-105 active:scale-95"
           title="Acessar Mesa do Estúdio / Painel de Controle"
         >
           <Sliders className="w-3.5 h-3.5 text-[var(--gold)]" />
           <span>Painel do Estúdio</span>
+        </button>
+      )}
+
+      {/* Floating PWA Install Button */}
+      {deferredPrompt && (
+        <button
+          type="button"
+          onClick={handleInstallApp}
+          className="studio-floating-panel fixed bottom-6 right-6 z-40 flex items-center gap-2 px-3.5 py-2 rounded-full border border-amber-500/50 bg-[#0c211f]/95 text-amber-300 hover:text-white hover:bg-[#102b28] shadow-xl backdrop-blur-md text-xs font-semibold cursor-pointer transition-all hover:scale-105 active:scale-95"
+          title="Instalar Rádio Vóz da Fé no seu dispositivo"
+        >
+          <Download className="w-3.5 h-3.5 text-[var(--gold)]" />
+          <span>Instalar App</span>
         </button>
       )}
 
@@ -832,6 +1073,7 @@ const MainView: React.FC = () => {
                 </label>
                 <input
                   type="text"
+                  maxLength={100}
                   required
                   placeholder="Como podemos chamar você?"
                   value={newAuthor}
@@ -847,6 +1089,7 @@ const MainView: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={60}
                     placeholder="Ex: São Paulo"
                     value={newCity}
                     onChange={(e) => setNewCity(e.target.value)}
@@ -892,6 +1135,7 @@ const MainView: React.FC = () => {
                 </label>
                 <textarea
                   rows={3}
+                  maxLength={500}
                   required
                   placeholder="Escreva brevemente seu pedido para que oremos com entendimento..."
                   value={newContent}
@@ -910,10 +1154,11 @@ const MainView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
+                  disabled={isSubmittingPrayer}
                   className="button button-gold"
                   style={{ minHeight: '38px', padding: '0 16px', fontSize: '11px' }}
                 >
-                  Apresentar Pedido
+                  {isSubmittingPrayer ? 'Apresentando...' : 'Apresentar Pedido'}
                 </button>
               </div>
             </form>

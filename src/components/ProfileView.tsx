@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged, signOut, updateProfile, updatePassword } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { User, Mail, LogOut, ShieldCheck, Sliders, ArrowLeft, Radio, Phone, MapPin, Lock, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { User, Mail, LogOut, ShieldCheck, Sliders, ArrowLeft, Radio, Phone, MapPin, Lock, CheckCircle2, AlertCircle, Loader2, Bell } from 'lucide-react';
 import { useRadio } from '../context/RadioContext';
 
 export const ProfileView: React.FC = () => {
@@ -16,6 +16,11 @@ export const ProfileView: React.FC = () => {
   const [address, setAddress] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Push notifications state
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushStatus, setPushStatus] = useState<string>('');
 
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -47,6 +52,41 @@ export const ProfileView: React.FC = () => {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setPushSupported(true);
+      setPushEnabled(Notification.permission === 'granted');
+    }
+  }, []);
+
+  const handleTogglePushNotifications = async () => {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') {
+      setPushEnabled(false);
+      setPushStatus('Notificações pausadas para esta sessão.');
+      setTimeout(() => setPushStatus(''), 3500);
+      return;
+    }
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        setPushEnabled(true);
+        setPushStatus('Notificações ativadas! Você receberá avisos da programação.');
+        if (user) {
+          const userRef = doc(db, 'users', user.uid);
+          await setDoc(userRef, { notificationsEnabled: true }, { merge: true });
+        }
+      } else {
+        setPushEnabled(false);
+        setPushStatus('Permissão de notificações não concedida no navegador.');
+      }
+    } catch (err) {
+      console.error(err);
+      setPushStatus('Não foi possível alterar a permissão de notificações.');
+    }
+    setTimeout(() => setPushStatus(''), 4000);
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,7 +194,7 @@ export const ProfileView: React.FC = () => {
         {/* Top Navigation / Badge */}
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-[rgba(255,255,255,0.1)]">
           <button 
-            onClick={() => setActiveTab('ao-vivo')}
+            onClick={() => { setActiveTab('ao-vivo'); window.location.hash = ''; }}
             className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 text-[var(--gold)]" /> Voltar à Rádio
@@ -273,6 +313,40 @@ export const ProfileView: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Notificações Push (PWA) */}
+          <div className="pt-2 border-t border-[rgba(255,255,255,0.08)]">
+            <h3 className="text-xs font-bold text-[var(--gold)] uppercase tracking-wider mb-2">Notificações da Rádio (PWA)</h3>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[rgba(12,33,31,0.8)] border border-[rgba(230,184,107,0.25)]">
+              <div className="flex items-center gap-2.5">
+                <Bell className={`w-4 h-4 ${pushEnabled ? 'text-[var(--gold)]' : 'text-slate-400'}`} />
+                <div>
+                  <p className="text-xs font-semibold text-white">Avisos da Programação & Cultos</p>
+                  <p className="text-[11px] text-slate-400">
+                    {pushSupported 
+                      ? (pushEnabled ? 'Notificações ativadas no dispositivo' : 'Receba avisos de programas ao vivo no seu navegador')
+                      : 'Notificações push não suportadas neste navegador'}
+                  </p>
+                </div>
+              </div>
+              {pushSupported && (
+                <button
+                  type="button"
+                  onClick={handleTogglePushNotifications}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    pushEnabled
+                      ? 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/50'
+                      : 'bg-slate-800 text-slate-300 border border-slate-700 hover:text-white'
+                  }`}
+                >
+                  {pushEnabled ? 'Ativado' : 'Ativar'}
+                </button>
+              )}
+            </div>
+            {pushStatus && (
+              <p className="text-[11px] text-amber-300 mt-1.5 px-1">{pushStatus}</p>
+            )}
           </div>
 
           <button 

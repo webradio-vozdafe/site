@@ -128,10 +128,9 @@ async function createServer() {
   // Audio Stream Proxy to prevent mixed-content blocks when listening from HTTPS
   app.get('/api/stream', async (req, res) => {
     try {
-      const radio = await fetchUpstreamRadioData();
-      let targetUrl = (req.query.url as string) || radio?.shoutcast || 'https://server15.srvsh.com.br:8912/;';
-      if (targetUrl === 'https://server15.srvsh.com.br:8912' || targetUrl === 'http://server15.srvsh.com.br:8912' || targetUrl === 'https://server15.srvsh.com.br:8912/' || targetUrl === 'http://server15.srvsh.com.br:8912/') {
-        targetUrl = 'https://server15.srvsh.com.br:8912/;';
+      let targetUrl = (req.query.url as string) || cachedRadioData?.shoutcast || 'https://server15.srvsh.com.br:8912/';
+      if (targetUrl === 'https://server15.srvsh.com.br:8912' || targetUrl === 'http://server15.srvsh.com.br:8912') {
+        targetUrl = 'https://server15.srvsh.com.br:8912/';
       }
 
       if (!targetUrl || typeof targetUrl !== 'string' || !targetUrl.startsWith('http')) {

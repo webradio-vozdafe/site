@@ -2,9 +2,10 @@ import React from 'react';
 import { Radio, Heart, MessageCircle, Phone, Mail, Sparkles } from 'lucide-react';
 import { RADIO_STATION } from '../data/radioData';
 import { useRadio } from '../context/RadioContext';
+import { buildWhatsAppUrl } from '../utils/whatsapp';
 
 export const Footer: React.FC = () => {
-  const { setActiveTab } = useRadio();
+  const { setActiveTab, stationSettings } = useRadio();
 
   return (
     <footer className="border-t border-slate-900 bg-slate-950/95 text-slate-400 text-xs pb-24 lg:pb-16 pt-12">
@@ -86,7 +87,15 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2 text-xs">
               <li className="flex items-center gap-2 text-slate-300">
                 <MessageCircle className="w-4 h-4 text-emerald-400" />
-                <span>WhatsApp: {RADIO_STATION.whatsapp}</span>
+                <a
+                  href={buildWhatsAppUrl(stationSettings.whatsapp, 'Paz do Senhor! Estou ouvindo a rádio e quero entrar em contato.')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-emerald-400 transition-colors"
+                  title={`Conversar no WhatsApp Oficial: ${stationSettings.whatsapp}`}
+                >
+                  WhatsApp: {stationSettings.whatsapp}
+                </a>
               </li>
               <li className="flex items-center gap-2 text-slate-300">
                 <Phone className="w-4 h-4 text-amber-400" />

@@ -16,7 +16,8 @@ import {
   X,
   Download
 } from 'lucide-react';
-import { DAILY_VERSES, RADIO_STATION, STREAM_QUALITIES } from './data/radioData';
+import { DAILY_VERSES, RADIO_STATION } from './data/radioData';
+import { buildWhatsAppUrl } from './utils/whatsapp';
 import { PrayerRequest } from './types';
 import { MiniBottomPlayer } from './components/MiniBottomPlayer';
 import { SleepTimerModal } from './components/SleepTimerModal';
@@ -54,11 +55,32 @@ const MainView: React.FC = () => {
     verses,
     activeVerseIdx,
     setActiveVerseIdx,
+    stationSettings,
     isControlPanelOpen,
     setIsControlPanelOpen,
     activeTab,
     setActiveTab
   } = useRadio();
+
+  const availableQualities = [
+    {
+      label: "Ao Vivo HD (128 kbps)",
+      bitrate: "128 kbps",
+      url: stationSettings?.streamUrlHD || "https://server15.srvsh.com.br:8912/"
+    },
+    {
+      label: "Alta Fidelidade (128 kbps)",
+      bitrate: "128 kbps",
+      url: stationSettings?.streamUrlAlt || "https://server15.srvsh.com.br:8912/stream"
+    },
+    {
+      label: "Economia (64 kbps)",
+      bitrate: "64 kbps",
+      url: (stationSettings?.streamUrlSD && !stationSettings.streamUrlSD.endsWith('/SD'))
+        ? stationSettings.streamUrlSD
+        : "https://server15.srvsh.com.br:8912/;"
+    }
+  ];
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   useEffect(() => {
@@ -304,7 +326,7 @@ const MainView: React.FC = () => {
 
   const handleWhatsAppDirect = () => {
     const text = `*Contato Vóz da Fé*\nNome: ${(contactName || 'Ouvinte').trim()}\nAssunto: ${contactSubject}\n\nMensagem:\n${(contactMessage || 'Paz do Senhor!').trim()}`;
-    window.open(`https://wa.me/5511987654321?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+    window.open(buildWhatsAppUrl(stationSettings.whatsapp, text), '_blank', 'noopener,noreferrer');
   };
 
   const handlePrayerSubmit = async (e: React.FormEvent) => {
@@ -361,9 +383,9 @@ const MainView: React.FC = () => {
   };
 
   const shareVerseToWhatsApp = () => {
-    const text = `“${currentVerse.text}” — ${currentVerse.reference}\n\nOuça a Rádio Vóz da Fé: ${window.location.href}`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
-    showNotice('Abrindo WhatsApp para compartilhar o versículo...');
+    const text = `“${currentVerse.text}” — ${currentVerse.reference}\n\nOuça a Rádio Vóz da Fé: ${window.location.href}\nWhatsApp Oficial do Estúdio: ${stationSettings.whatsapp}`;
+    window.open(buildWhatsAppUrl(stationSettings.whatsapp, text), '_blank', 'noopener,noreferrer');
+    showNotice('Abrindo WhatsApp oficial do estúdio para compartilhar...');
   };
 
   const shareVerseToFacebook = () => {
@@ -484,6 +506,7 @@ const MainView: React.FC = () => {
                 <button
                   className="button button-gold"
                   type="button"
+                  aria-label={isPlaying ? 'Pausar rádio' : 'Ouvir a rádio'}
                   onClick={() => {
                     togglePlay();
                     showNotice(isPlaying ? 'Transmissão pausada.' : 'Sintonizando louvores ao vivo...');
@@ -554,11 +577,13 @@ const MainView: React.FC = () => {
                     <span>{audioError}</span>
                   </div>
                   <button
+                    type="button"
                     onClick={retryPlayback}
-                    className="flex items-center gap-1 font-bold text-white underline cursor-pointer"
+                    disabled={isLoading}
+                    className="flex items-center gap-1 font-bold text-white underline cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <RotateCcw className="w-3 h-3" />
-                    Reconectar
+                    <RotateCcw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
+                    <span>{isLoading ? 'Reconectando...' : 'Reconectar'}</span>
                   </button>
                 </div>
               )}
@@ -635,22 +660,22 @@ const MainView: React.FC = () => {
                         <span className="text-[9px] font-bold text-slate-400 px-2 py-0.5 block uppercase tracking-wider">
                           Qualidade Áudio
                         </span>
-                        {STREAM_QUALITIES.map((q) => (
+                        {availableQualities.map((q) => (
                           <button
-                            key={q.bitrate}
+                            key={q.url}
                             onClick={() => {
                               setQuality(q);
                               setQualityMenuOpen(false);
                               showNotice(`Qualidade alterada para: ${q.label}`);
                             }}
                             className={`w-full text-left px-2 py-1.5 rounded text-[11px] flex items-center justify-between cursor-pointer ${
-                              currentQuality.bitrate === q.bitrate
+                              currentQuality.url === q.url
                                 ? 'bg-[var(--gold)] text-[#192c26] font-bold'
                                 : 'text-slate-200 hover:bg-slate-800'
                             }`}
                           >
                             <span>{q.label}</span>
-                            {currentQuality.bitrate === q.bitrate && <Check className="w-3 h-3" />}
+                            {currentQuality.url === q.url && <Check className="w-3 h-3" />}
                           </button>
                         ))}
                       </div>
@@ -861,12 +886,18 @@ const MainView: React.FC = () => {
                 </span>
                 Testemunhos, sugestões e recados
               </div>
-              <div className="contact-reason">
+              <a
+                href={buildWhatsAppUrl(stationSettings.whatsapp, 'Paz do Senhor! Gostaria de falar com o estúdio da Rádio Vóz da Fé.')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="contact-reason cursor-pointer transition-colors hover:text-[var(--gold)]"
+                title={`Conversar no WhatsApp Oficial do Estúdio (${stationSettings.whatsapp})`}
+              >
                 <span className="contact-reason-icon" aria-hidden="true">
                   <MessageCircle className="w-4 h-4 text-[#8b7550]" />
                 </span>
-                WhatsApp do Estúdio: {RADIO_STATION.whatsapp}
-              </div>
+                WhatsApp do Estúdio: {stationSettings.whatsapp}
+              </a>
             </div>
           </div>
 
@@ -943,6 +974,7 @@ const MainView: React.FC = () => {
                   onClick={handleWhatsAppDirect}
                   className="button button-outline cursor-pointer"
                   style={{ minHeight: '44px', fontSize: '11px', padding: '0 14px' }}
+                  title={`Conversar no WhatsApp Oficial do Estúdio (${stationSettings.whatsapp})`}
                 >
                   <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
                   WhatsApp

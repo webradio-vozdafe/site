@@ -12,7 +12,7 @@ import {
 } from '../types';
 import { db, auth } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, setDoc } from 'firebase/firestore';
 import {
   STREAM_QUALITIES,
   getCurrentShow,
@@ -181,7 +181,21 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return false;
     }
   });
-  const [currentQuality, setCurrentQuality] = useState<StreamQuality>(STREAM_QUALITIES[0]);
+  const [currentQuality, setCurrentQuality] = useState<StreamQuality>(() => {
+    try {
+      const savedUrl = localStorage.getItem('vozdafe_stream_quality_url');
+      if (savedUrl) {
+        if (savedUrl.endsWith('/SD')) {
+          return STREAM_QUALITIES[2];
+        }
+        const found = STREAM_QUALITIES.find((q) => q.url === savedUrl);
+        if (found) return found;
+      }
+      return STREAM_QUALITIES[0];
+    } catch {
+      return STREAM_QUALITIES[0];
+    }
+  });
   const [audioError, setAudioError] = useState<string | null>(null);
 
   // Active Podcast mode vs live stream
@@ -225,7 +239,14 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [stationSettings, setStationSettings] = useState<typeof RADIO_STATION>(() => {
     try {
       const saved = localStorage.getItem('vozdafe_station');
-      return saved ? JSON.parse(saved) : RADIO_STATION;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.streamUrlSD && parsed.streamUrlSD.endsWith('/SD')) {
+          parsed.streamUrlSD = 'https://server15.srvsh.com.br:8912/;';
+        }
+        return { ...RADIO_STATION, ...parsed };
+      }
+      return RADIO_STATION;
     } catch {
       return RADIO_STATION;
     }
@@ -239,7 +260,55 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch {
       // safe fallback
     }
+
+    // If audio is playing and a stream URL was updated, immediately hot-reload audio stream
+    if (audioRef.current && (updates.streamUrlHD || updates.streamUrlSD || updates.streamUrlAlt)) {
+      const activeUrl = currentQuality.bitrate === '64 kbps'
+        ? (updated.streamUrlSD || 'https://server15.srvsh.com.br:8912/SD')
+        : (updated.streamUrlHD || 'https://server15.srvsh.com.br:8912/');
+      
+      const wasPlaying = isPlaying;
+      audioRef.current.src = activeUrl;
+      audioRef.current.load();
+      if (wasPlaying) {
+        audioRef.current.play().catch(console.warn);
+      }
+    }
+
+    // Sync to Firestore for all listeners & devices
+    try {
+      const settingsRef = doc(db, 'settings', 'station');
+      setDoc(settingsRef, updated, { merge: true }).catch(console.warn);
+    } catch (err) {
+      console.warn("Error syncing settings to Firestore:", err);
+    }
   };
+
+  // Real-time Firestore sync for station settings
+  useEffect(() => {
+    try {
+      const settingsRef = doc(db, 'settings', 'station');
+      const unsubscribe = onSnapshot(settingsRef, (snap) => {
+        if (snap.exists()) {
+          const remoteData = snap.data() as Partial<typeof RADIO_STATION>;
+          setStationSettings((prev) => {
+            const merged = { ...prev, ...remoteData };
+            try {
+              localStorage.setItem('vozdafe_station', JSON.stringify(merged));
+            } catch {
+              // ignore
+            }
+            return merged;
+          });
+        }
+      }, (err) => {
+        console.warn("Firestore station settings listener notice:", err);
+      });
+      return () => unsubscribe();
+    } catch (err) {
+      console.warn("Failed to subscribe to station settings:", err);
+    }
+  }, []);
 
   // Navigation tab & Control Panel toggle
   const [activeTab, setActiveTab] = useState<string>('ao-vivo');
@@ -352,7 +421,7 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     musica_atual: 'Louvores que Edificam • Ao Vivo',
     proxima_musica: 'Bondade de Deus — Louvor & Adoração',
     genero: 'Gospel / Louvor & Adoração',
-    shoutcast: 'https://server15.srvsh.com.br:8912/;',
+    shoutcast: 'https://server15.srvsh.com.br:8912/',
     rtmp: '',
     rtsp: '',
     capa_musica: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&auto=format&fit=crop&q=80',
@@ -364,22 +433,33 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [lastRadioUpdate, setLastRadioUpdate] = useState<string | null>(null);
   const [radioError, setRadioError] = useState<string | null>(null);
 
-  // Compute effective stream URL (defaults to real user live stream: https://server15.srvsh.com.br:8912/;)
+  // Compute effective stream URL (defaults to real user live stream: https://server15.srvsh.com.br:8912/)
   const getEffectiveStreamUrl = useCallback((data: RadioAPIData | null, qual: StreamQuality): string => {
-    const raw = data?.shoutcast || qual?.url || 'https://server15.srvsh.com.br:8912/;';
+    // If Admin Master configured custom stream URLs in stationSettings, prioritize them
+    if (qual?.bitrate === '64 kbps' || qual?.url?.includes('/SD') || qual?.url?.includes('/;')) {
+      const sd = stationSettings?.streamUrlSD;
+      if (sd && !sd.endsWith('/SD')) {
+        return sd;
+      }
+      return 'https://server15.srvsh.com.br:8912/;';
+    }
+    if (qual?.url?.includes('/stream') || qual?.label?.includes('Alta Fidelidade')) {
+      return stationSettings?.streamUrlAlt || 'https://server15.srvsh.com.br:8912/stream';
+    }
+    if (stationSettings?.streamUrlHD) {
+      return stationSettings.streamUrlHD;
+    }
+
+    const raw = qual?.url || data?.shoutcast || 'https://server15.srvsh.com.br:8912/';
     if (raw && typeof raw === 'string') {
       let url = raw.trim();
-      // Ensure shoutcast server15.srvsh.com.br:8912 has /; audio stream suffix
-      if (url === 'https://server15.srvsh.com.br:8912' || url === 'http://server15.srvsh.com.br:8912' || url === 'https://server15.srvsh.com.br:8912/' || url === 'http://server15.srvsh.com.br:8912/') {
-        return 'https://server15.srvsh.com.br:8912/;';
-      }
-      if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http:')) {
-        return `/api/stream?url=${encodeURIComponent(url)}`;
+      if (url === 'https://server15.srvsh.com.br:8912' || url === 'http://server15.srvsh.com.br:8912') {
+        return 'https://server15.srvsh.com.br:8912/';
       }
       return url;
     }
-    return 'https://server15.srvsh.com.br:8912/;';
-  }, []);
+    return 'https://server15.srvsh.com.br:8912/';
+  }, [stationSettings]);
 
   const effectiveStreamUrl = getEffectiveStreamUrl(radioData, currentQuality);
 
@@ -574,12 +654,21 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => clearInterval(interval);
   }, []);
 
-  // Initialize Audio
+  const isPlayingRef = useRef(isPlaying);
+  isPlayingRef.current = isPlaying;
+  const effectiveStreamUrlRef = useRef(effectiveStreamUrl);
+  effectiveStreamUrlRef.current = effectiveStreamUrl;
+  const activePodcastRef = useRef(activePodcast);
+  activePodcastRef.current = activePodcast;
+
+  // Initialize Audio Element (created once, never torn down on state updates)
   useEffect(() => {
-    const audio = new Audio();
-    audio.crossOrigin = "anonymous";
-    audio.preload = "none";
-    audioRef.current = audio;
+    if (!audioRef.current) {
+      const audio = new Audio();
+      audio.preload = "auto";
+      audioRef.current = audio;
+    }
+    const audio = audioRef.current;
 
     const handleWaiting = () => setIsLoading(true);
     const handlePlaying = () => {
@@ -596,26 +685,28 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsLoading(false);
       setActivePodcast(null);
       if (audioRef.current) {
-        audioRef.current.src = effectiveStreamUrl;
+        audioRef.current.src = effectiveStreamUrlRef.current;
         audioRef.current.load();
       }
     };
     const handleError = () => {
-      console.warn("Audio element error. Switching to fallback safe stream.");
+      console.warn("Audio element error on stream URL:", audio.src);
       setIsLoading(false);
-      if (audio.src !== STREAM_QUALITIES[0].url) {
-        audio.src = STREAM_QUALITIES[0].url;
+      const primaryFallback = "https://server15.srvsh.com.br:8912/";
+      if (audio.src && !audio.src.endsWith(":8912/")) {
+        console.info("Recovering with primary live stream fallback:", primaryFallback);
+        audio.src = primaryFallback;
         audio.load();
-        if (isPlaying) {
+        if (isPlayingRef.current) {
           audio.play().catch(e => {
-            console.error("Fallback play failed:", e);
-            setAudioError("Erro ao carregar áudio. Clique em reconectar.");
+            console.error("Fallback playback failed:", e);
             setIsPlaying(false);
+            setAudioError("Erro ao reproduzir. Clique para reconectar.");
           });
         }
       } else {
-        setAudioError("Conexão instável. Clique para reconectar.");
         setIsPlaying(false);
+        setAudioError("Conexão instável. Clique para reconectar.");
       }
     };
 
@@ -631,10 +722,8 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       audio.removeEventListener('pause', handlePause);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
-      audio.pause();
-      audio.src = "";
     };
-  }, [effectiveStreamUrl, isPlaying]);
+  }, []);
 
   // Sleep timer ticker
   useEffect(() => {
@@ -663,30 +752,40 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [volume, isMuted]);
 
   const togglePlay = () => {
-    if (!audioRef.current) return;
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.preload = "auto";
+    }
+    const audio = audioRef.current;
     setAudioError(null);
 
     if (isPlaying) {
-      audioRef.current.pause();
+      audio.pause();
       setIsPlaying(false);
+      setIsLoading(false);
     } else {
       setIsLoading(true);
       const targetUrl = activePodcast ? activePodcast.audioUrl : effectiveStreamUrl;
-      if (audioRef.current.src !== targetUrl) {
-        audioRef.current.src = targetUrl;
-        audioRef.current.load();
+      audio.volume = isMuted ? 0 : volume;
+      
+      if (!audio.src || audio.src !== targetUrl) {
+        audio.src = targetUrl;
+        audio.load();
       }
-      audioRef.current.play()
-        .then(() => {
+      
+      const p = audio.play();
+      if (p !== undefined) {
+        p.then(() => {
           setIsPlaying(true);
           setIsLoading(false);
-        })
-        .catch((err) => {
+          setAudioError(null);
+        }).catch((err) => {
           console.warn("Autoplay or stream load prevented:", err);
           setIsLoading(false);
           setIsPlaying(false);
           setAudioError("Clique para iniciar a transmissão");
         });
+      }
     }
   };
 
@@ -734,20 +833,29 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [isPlaying, activePodcast, currentTrackInfo, currentShow, radioData]);
 
   const retryPlayback = () => {
-    if (!audioRef.current) return;
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.preload = "auto";
+    }
+    const audio = audioRef.current;
     setAudioError(null);
     setIsLoading(true);
-    audioRef.current.src = activePodcast ? activePodcast.audioUrl : effectiveStreamUrl;
-    audioRef.current.load();
-    audioRef.current.play()
-      .then(() => {
+    const targetUrl = activePodcast ? activePodcast.audioUrl : (effectiveStreamUrl || 'https://server15.srvsh.com.br:8912/');
+    audio.volume = isMuted ? 0 : volume;
+    audio.src = targetUrl;
+    audio.load();
+    const p = audio.play();
+    if (p !== undefined) {
+      p.then(() => {
         setIsPlaying(true);
         setIsLoading(false);
-      })
-      .catch(() => {
+        setAudioError(null);
+      }).catch((err) => {
+        console.warn("Retry failed:", err);
         setIsLoading(false);
         setAudioError("Não foi possível conectar. Verifique sua rede.");
       });
+    }
   };
 
   const setVolume = (vol: number) => {
@@ -781,6 +889,11 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const setQuality = (quality: StreamQuality) => {
     setCurrentQuality(quality);
+    try {
+      localStorage.setItem('vozdafe_stream_quality_url', quality.url);
+    } catch {
+      // safe fallback
+    }
     if (audioRef.current && !activePodcast) {
       const wasPlaying = isPlaying;
       audioRef.current.src = quality.url;

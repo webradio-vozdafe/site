@@ -15,12 +15,13 @@ import {
 } from 'lucide-react';
 import { useRadio } from '../context/RadioContext';
 import { RADIO_STATION } from '../data/radioData';
+import { buildWhatsAppUrl } from '../utils/whatsapp';
 import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
 export const Navbar: React.FC = () => {
-  const { activeTab, setActiveTab, isPlaying, togglePlay, setIsControlPanelOpen } = useRadio();
+  const { activeTab, setActiveTab, isPlaying, togglePlay, setIsControlPanelOpen, stationSettings } = useRadio();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -145,11 +146,11 @@ export const Navbar: React.FC = () => {
 
             {/* Direct WhatsApp Studio */}
             <a
-              href={`https://wa.me/5511987654321?text=${encodeURIComponent('Paz do Senhor! Estou ouvindo a Rádio Vóz da Fé e quero deixar meu abraço!')}`}
+              href={buildWhatsAppUrl(stationSettings.whatsapp, 'Paz do Senhor! Estou ouvindo a Rádio Vóz da Fé e quero deixar meu abraço!')}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-medium transition-colors"
-              title="WhatsApp do Estúdio"
+              title={`WhatsApp do Estúdio: ${stationSettings.whatsapp}`}
             >
               <MessageCircle className="w-3.5 h-3.5" />
               <span>WhatsApp</span>
@@ -299,10 +300,11 @@ export const Navbar: React.FC = () => {
 
           <div className="pt-3">
             <a
-              href={`https://wa.me/5511987654321?text=${encodeURIComponent('Paz do Senhor! Estou ouvindo a Rádio Vóz da Fé!')}`}
+              href={buildWhatsAppUrl(stationSettings.whatsapp, 'Paz do Senhor! Estou ouvindo a Rádio Vóz da Fé!')}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-emerald-950"
+              title={`Falar no WhatsApp da Rádio: ${stationSettings.whatsapp}`}
             >
               <MessageCircle className="w-5 h-5" />
               Falar no WhatsApp da Rádio

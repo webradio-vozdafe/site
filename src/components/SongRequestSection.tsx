@@ -11,9 +11,10 @@ import {
   UserCheck
 } from 'lucide-react';
 import { useRadio } from '../context/RadioContext';
+import { buildWhatsAppUrl } from '../utils/whatsapp';
 
 export const SongRequestSection: React.FC = () => {
-  const { songRequests, addSongRequest } = useRadio();
+  const { songRequests, addSongRequest, stationSettings } = useRadio();
 
   const [listenerName, setListenerName] = useState('');
   const [city, setCity] = useState('');
@@ -191,13 +192,14 @@ export const SongRequestSection: React.FC = () => {
 
               <div className="pt-2 text-center">
                 <a
-                  href={`https://wa.me/5511987654321?text=${encodeURIComponent('Paz! Gostaria de pedir um louvor na Rádio Vóz da Fé!')}`}
+                  href={buildWhatsAppUrl(stationSettings.whatsapp, 'Paz do Senhor! Gostaria de pedir um louvor na programação da Rádio Vóz da Fé!')}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+                  title={`Pedir hino pelo WhatsApp Oficial: ${stationSettings.whatsapp}`}
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
-                  <span>Ou peça via WhatsApp direto do estúdio</span>
+                  <span>Ou peça via WhatsApp direto do estúdio ({stationSettings.whatsapp})</span>
                 </a>
               </div>
             </form>

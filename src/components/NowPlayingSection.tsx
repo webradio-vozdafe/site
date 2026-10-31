@@ -224,13 +224,16 @@ export const NowPlayingSection: React.FC = () => {
 
             {/* Audio Error alert if audio is broken */}
             {audioError && (
-              <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-xs text-rose-300 flex items-center justify-between">
-                <span>{audioError}</span>
+              <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-xs text-rose-300 flex items-center justify-between gap-3">
+                <span className="flex-1">{audioError}</span>
                 <button
+                  type="button"
                   onClick={retryPlayback}
-                  className="px-3 py-1 bg-amber-500 text-slate-950 font-bold rounded-lg hover:bg-amber-400 transition-colors"
+                  disabled={isLoading}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500 text-slate-950 font-bold rounded-lg hover:bg-amber-400 transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed text-xs flex-shrink-0"
                 >
-                  Reconectar
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+                  <span>{isLoading ? 'Reconectando...' : 'Reconectar'}</span>
                 </button>
               </div>
             )}

@@ -10,15 +10,18 @@ export const RADIO_STATION = {
   email: "contato@vozdafe.radio.br",
   onlineListeners: 4280,
   yearsOnAir: "12 Anos",
+  streamUrlHD: "https://server15.srvsh.com.br:8912/",
+  streamUrlSD: "https://server15.srvsh.com.br:8912/;",
+  streamUrlAlt: "https://server15.srvsh.com.br:8912/stream",
 };
 
-export const STREAM_URL = "https://server15.srvsh.com.br:8912/;";
+export const STREAM_URL = "https://server15.srvsh.com.br:8912/";
 
 export const STREAM_QUALITIES: StreamQuality[] = [
   {
     label: "Ao Vivo HD (128 kbps)",
     bitrate: "128 kbps",
-    url: "https://server15.srvsh.com.br:8912/;"
+    url: "https://server15.srvsh.com.br:8912/"
   },
   {
     label: "Alta Fidelidade (128 kbps)",

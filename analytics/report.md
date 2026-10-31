@@ -1,28 +1,33 @@
-# Relatório de Análise do Sistema — Finalizações Pendentes
+# Relatório de Diagnóstico do Sistema — Finalizações e Correções Pendentes
 
-**Data e Hora de Geração:** 25/10/2026 17:55 (Horário de Brasília)
+**Data e Hora de Geração:** 28/10/2026 10:46 (Horário de Brasília)
 
-Este relatório apresenta um diagnóstico das implementações técnicas que já estão em andamento no portal da Rádio Vóz da Fé e que necessitam de consolidação e refinamento, sem propor novos módulos ou ampliar o escopo do projeto.
-
----
-
-## 1. Mapeamento de Pendências de Finalização
-
-### 1.1. Integração com a Media Session API no Navegador/Dispositivo
-- **Estado Atual:** O streaming ao vivo e podcasts são reproduzidos através do elemento `HTMLAudioElement` gerenciado no `RadioContext.tsx`.
-- **Pendência de Finalização:** Conectar a `navigator.mediaSession` para exibir metadados reais (título do louvor atual, nome do programa, artista e arte da capa) na tela de bloqueio de smartphones, centrais multimídia automotivas e centrais de notificação do sistema operacional, além de responder aos comandos nativos de play/pause.
-
-### 1.2. Tratamento do Evento de Término de Ministrações/Podcasts (`onEnded`)
-- **Estado Atual:** A reprodução de ministrações (`activePodcast`) carrega o arquivo de áudio e toca até o fim.
-- **Pendência de Finalização:** Escutar o evento `'ended'` no elemento de áudio quando em modo podcast, restaurando automaticamente o estado da rádio para a transmissão ao vivo (`effectiveStreamUrl`), evitando que o reprodutor fique preso em um arquivo encerrado.
-
-### 1.3. Paginação e Botão "Carregar Mais" no Mural de Orações
-- **Estado Atual:** A lista de intenções em `PrayerWallSection.tsx` renderiza todos os itens do Firestore de forma contínua em uma única renderização.
-- **Pendência de Finalização:** Estabelecer uma exibição inicial de cartões (ex.: 6 ou 9 intenções) acompanhada de um botão discreto "Carregar mais pedidos de oração", garantindo fluidez e performance em dispositivos móveis à medida que o volume de registros cresce.
-
-### 1.4. Feedback Visual Ativo nos Botões da Mesa de Efeitos Sonoros (Soundboard)
-- **Estado Atual:** A mesa de efeitos sonoros no Painel do Estúdio (`ControlPanel.tsx`) dispara sínteses sonoras com `Web Audio API` (`vinheta`, `hora certa`, `clamor`, `glória`, `alerta`), porém os botões não refletem visualmente qual efeito está sendo reproduzido no momento.
-- **Pendência de Finalização:** Adicionar estado transitório de efeito ativo (`activeEffectId`) para destacar o botão com borda iluminada e animação sutil durante a duração do disparo sonoro.
+Este relatório detalha exclusivamente as pendências técnicas, avisos de console e ajustes finos de implementações existentes no portal da Rádio Vóz da Fé, sem propor novas funcionalidades.
 
 ---
-*Relatório técnico gerado exclusivamente para documentação e estruturação do plano de execução.*
+
+## 1. Diagnóstico Geral do Sistema
+
+### 1.1. Alerta de Chave Duplicada no Dropdown de Qualidade (React Key Warning)
+- **Diagnóstico:** No componente `App.tsx` (linhas ~630-650), a listagem de qualidades de áudio é renderizada utilizando `key={q.bitrate}`:
+  ```tsx
+  {STREAM_QUALITIES.map((q) => (
+    <button key={q.bitrate} ...
+  ```
+  Como tanto o perfil "Ao Vivo HD" quanto o perfil "Alta Fidelidade" possuem o mesmo bitrate (`"128 kbps"`), o React emite o erro `Warning: Encountered two children with the same key, '128 kbps'`.
+- **Finalização Necessária:** Alterar a chave única da iteração para `q.label` ou `q.url`.
+
+### 1.2. Compatibilidade e Preservação do Ponto de Montagem SD (`/SD`)
+- **Diagnóstico:** O arquivo `src/data/radioData.ts` foi atualizado para apontar a qualidade econômica (64 kbps) para `https://server15.srvsh.com.br:8912/SD`. No entanto, funções de normalização de URL no `RadioContext.tsx` e `server.ts` precisam garantir suporte pleno a pontos de montagem com subcaminhos sem sanitização inadequada.
+- **Finalização Necessária:** Assegurar que `getEffectiveStreamUrl` respeite estritamente o endpoint selecionado pelo ouvinte (`/SD`).
+
+### 1.3. Persistência da Qualidade de Áudio Selecionada no Armazenamento Local (`localStorage`)
+- **Diagnóstico:** Enquanto o volume (`vozdafe_volume`) e o estado mudo (`vozdafe_muted`) são persistidos com sucesso, a qualidade do streaming (`currentQuality`) é reiniciada para a padrão ao recarregar a página, obrigando o ouvinte que escolheu a opção econômica (64 kbps) a reconfigurá-la a cada visita.
+- **Finalização Necessária:** Salvar e restaurar `currentQuality` via `localStorage` com fallback seguro.
+
+### 1.4. Feedback de Carregamento no Botão de Reconexão de Áudio
+- **Diagnóstico:** Ao ocorrer uma oscilação na rede e o usuário clicar no botão "Reconectar" em `NowPlayingSection.tsx` ou no banner de erro em `App.tsx`, o botão chama `retryPlayback()`, mas não reflete o estado de tentativa (`isLoading` com spinner/texto "Reconectando..."), gerando cliques repetidos desnecessários.
+- **Finalização Necessária:** Integrar o estado `isLoading` nos botões de reconexão de áudio para fornecer feedback imediato.
+
+---
+*Relatório de finalizações gerado estritamente para documentação e planejamento.*

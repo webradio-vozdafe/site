@@ -18,7 +18,7 @@ import {
 import { useRadio } from '../context/RadioContext';
 import { AudioVisualizer } from './AudioVisualizer';
 import { SleepTimerModal } from './SleepTimerModal';
-import { STREAM_QUALITIES, RADIO_STATION } from '../data/radioData';
+import { RADIO_STATION } from '../data/radioData';
 
 export const LivePlayerHero: React.FC = () => {
   const {
@@ -41,8 +41,29 @@ export const LivePlayerHero: React.FC = () => {
     setActiveTab,
     activePodcast,
     stopPodcast,
-    radioData
+    radioData,
+    stationSettings
   } = useRadio();
+
+  const availableQualities = [
+    {
+      label: "Ao Vivo HD (128 kbps)",
+      bitrate: "128 kbps",
+      url: stationSettings?.streamUrlHD || "https://server15.srvsh.com.br:8912/"
+    },
+    {
+      label: "Alta Fidelidade (128 kbps)",
+      bitrate: "128 kbps",
+      url: stationSettings?.streamUrlAlt || "https://server15.srvsh.com.br:8912/stream"
+    },
+    {
+      label: "Economia (64 kbps)",
+      bitrate: "64 kbps",
+      url: (stationSettings?.streamUrlSD && !stationSettings.streamUrlSD.endsWith('/SD'))
+        ? stationSettings.streamUrlSD
+        : "https://server15.srvsh.com.br:8912/;"
+    }
+  ];
 
   const [qualityMenuOpen, setQualityMenuOpen] = useState(false);
   const [sleepModalOpen, setSleepModalOpen] = useState(false);
@@ -355,21 +376,21 @@ export const LivePlayerHero: React.FC = () => {
                       <span className="text-[10px] font-bold text-slate-400 px-2 py-1 block uppercase">
                         Qualidade do Áudio
                       </span>
-                      {STREAM_QUALITIES.map((q) => (
+                      {availableQualities.map((q) => (
                         <button
-                          key={q.label}
+                          key={q.url}
                           onClick={() => {
                             setQuality(q);
                             setQualityMenuOpen(false);
                           }}
                           className={`w-full text-left px-2 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
-                            currentQuality.bitrate === q.bitrate
+                            currentQuality.url === q.url
                               ? 'bg-amber-500 text-slate-950 font-bold'
                               : 'text-slate-300 hover:bg-slate-800'
                           }`}
                         >
                           <span>{q.label}</span>
-                          {currentQuality.bitrate === q.bitrate && <Check className="w-3.5 h-3.5" />}
+                          {currentQuality.url === q.url && <Check className="w-3.5 h-3.5" />}
                         </button>
                       ))}
                     </div>

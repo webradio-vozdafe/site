@@ -7,8 +7,11 @@ import {
   Users
 } from 'lucide-react';
 import { RADIO_STATION } from '../data/radioData';
+import { useRadio } from '../context/RadioContext';
+import { buildWhatsAppUrl } from '../utils/whatsapp';
 
 export const AboutRadioSection: React.FC = () => {
+  const { stationSettings } = useRadio();
   const team = [
     {
       name: "Pr. Marcos Lima",
@@ -141,12 +144,13 @@ export const AboutRadioSection: React.FC = () => {
             </div>
             <div>
               <h4 className="text-sm font-bold text-white">WhatsApp do Ouvinte</h4>
-              <p className="text-xs text-slate-400 mt-1">{RADIO_STATION.whatsapp}</p>
+              <p className="text-xs text-slate-400 mt-1">{stationSettings.whatsapp}</p>
               <a
-                href={`https://wa.me/5511987654321?text=${encodeURIComponent('Paz do Senhor!')}`}
+                href={buildWhatsAppUrl(stationSettings.whatsapp, 'Paz do Senhor! Estou entrando em contato pelo site da rádio.')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block mt-2 text-xs font-bold text-emerald-400 hover:text-emerald-300"
+                title={`Enviar mensagem no WhatsApp: ${stationSettings.whatsapp}`}
               >
                 Enviar mensagem agora →
               </a>

@@ -1,29 +1,26 @@
 # =====================================================================
-# CONFIGURAÇÃO CPANEL / APACHE PARA VOZ DA FÉ (SPA REWRITE & CACHING)
+# CONFIGURAÇÃO CPANEL APACHE OTIMIZADA PARA VOZ DA FÉ (SPA ROUTER)
 # =====================================================================
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
 
-  # Força HTTPS em todas as requisições (descomente as 2 linhas abaixo se necessário)
-  # RewriteCond %{HTTPS} off
-  # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+  # Se o arquivo ou pasta solicitado existir fisicamente, sirva diretamente
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
 
-  # Servir arquivos e diretórios existentes diretamente
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-
-  # Fallback para index.html em todas as outras rotas (SPA Router)
-  RewriteRule ^ index.html [L]
+  # Caso contrário, redirecione todas as rotas para o index.html (SPA Fallback)
+  RewriteRule . index.html [L]
 </IfModule>
 
-# Compressão GZIP para aceleração do carregamento
+# Compressão Gzip para otimização de velocidade
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/xml image/svg+xml
 </IfModule>
 
-# Regras de Cache de Navegador
+# Cache de Navegador para arquivos estáticos
 <IfModule mod_expires.c>
   ExpiresActive On
   ExpiresDefault "access plus 1 month"
@@ -35,12 +32,10 @@
   ExpiresByType image/svg+xml "access plus 1 year"
   ExpiresByType text/css "access plus 1 year"
   ExpiresByType application/javascript "access plus 1 year"
-  ExpiresByType application/manifest+json "access plus 1 week"
 </IfModule>
 
-# Cabeçalhos de Segurança & CORS
+# Permissões CORS para áudio e PWA
 <IfModule mod_headers.c>
   Header set Access-Control-Allow-Origin "*"
   Header set X-Content-Type-Options "nosniff"
-  Header set X-XSS-Protection "1; mode=block"
 </IfModule>

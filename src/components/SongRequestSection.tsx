@@ -228,7 +228,9 @@ export const SongRequestSection: React.FC = () => {
                   key={song.id}
                   className={`p-4 rounded-2xl border transition-all ${
                     isNowPlaying
-                      ? 'bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 border-amber-500/50 shadow-lg shadow-amber-500/10'
+                      ? 'bg-gradient-to-r from-amber-950/50 via-slate-900 to-slate-950 border-amber-500/80 shadow-lg shadow-amber-500/20 ring-1 ring-amber-500/40'
+                      : song.status === 'atendido'
+                      ? 'bg-slate-900/90 border-emerald-500/40 hover:border-emerald-500/60'
                       : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
                   }`}
                 >

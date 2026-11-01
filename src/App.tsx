@@ -32,6 +32,11 @@ import { SongRequestSection } from './components/SongRequestSection';
 const MainView: React.FC = () => {
   useEffect(() => {
     document.title = import.meta.env.VITE_APP_TITLE || 'VOZ DA FÉ Web Rádio';
+    if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    // Garante o carregamento inicial do topo para o bottom
+    window.scrollTo(0, 0);
   }, []);
 
   const {
@@ -93,8 +98,13 @@ const MainView: React.FC = () => {
   // Hash Navigation Sync & Smooth Scrolling
   useEffect(() => {
     const handleHashSync = () => {
-      const hash = window.location.hash.replace('#', '').toLowerCase();
-      if (!hash) return;
+      let hash = window.location.hash.replace('#', '').toLowerCase();
+      if (!hash) {
+        if (typeof window !== 'undefined') {
+          window.history.replaceState(null, '', '#inicio');
+          hash = 'inicio';
+        }
+      }
 
       // Studio Modal
       if (['estudio', 'painel', 'admin'].includes(hash)) {
@@ -149,6 +159,15 @@ const MainView: React.FC = () => {
     window.addEventListener('hashchange', handleHashSync);
     return () => window.removeEventListener('hashchange', handleHashSync);
   }, [isLoggedIn, setActiveTab, setIsControlPanelOpen]);
+
+  // Garante a rolagem para o topo ao alterar de aba na página principal
+  useEffect(() => {
+    if (activeTab === 'ao-vivo' && (!window.location.hash || ['#', '#inicio', '#home', '#ao-vivo'].includes(window.location.hash))) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (['programacao', 'oracao', 'pedir-hino', 'devocionais', 'sobre'].includes(activeTab)) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [activeTab]);
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
     e.preventDefault();
@@ -717,7 +736,20 @@ const MainView: React.FC = () => {
             <div className="radio-scene" aria-hidden="true">
               <div className="sun"></div>
               <div className="orbit">
-                <div className="cross"></div>
+                <img
+                  src="/assets/aistudio/Logotipo_Dourado_Voz_da_F__4a6f8aec.png"
+                  alt="Logotipo Dourado Voz da Fé"
+                  className="radio-logo-img"
+                  style={{
+                    height: '144px',
+                    maxHeight: '144px',
+                    width: 'auto',
+                    objectFit: 'contain',
+                    position: 'relative',
+                    zIndex: 1,
+                    filter: 'drop-shadow(0 10px 35px rgba(230,184,107,.4))'
+                  }}
+                />
               </div>
               <div className={`signal ${isPlaying ? 'playing' : ''}`}>
                 <svg viewBox="0 0 24 24" fill="none">

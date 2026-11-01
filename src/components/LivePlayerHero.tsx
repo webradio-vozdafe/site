@@ -180,13 +180,13 @@ export const LivePlayerHero: React.FC = () => {
             {/* Left: Show Info & Host Avatar */}
             <div className="lg:col-span-5 flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
               <div className="relative group">
-                <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl overflow-hidden border-2 border-amber-500/40 shadow-xl shadow-amber-500/10 relative">
+                <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl overflow-hidden border-2 border-amber-500/40 shadow-xl shadow-amber-500/10 relative bg-slate-950/80 flex items-center justify-center p-2">
                   <img
-                    src={currentShow.image}
-                    alt={currentShow.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    src="/assets/aistudio/Logotipo_Dourado_Voz_da_F__4a6f8aec.png"
+                    alt={currentShow.title || "Logotipo Dourado Voz da Fé"}
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-md"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent pointer-events-none" />
                 </div>
                 {isPlaying && (
                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-red-600 text-white font-extrabold text-[10px] uppercase tracking-wider shadow-md animate-pulse">

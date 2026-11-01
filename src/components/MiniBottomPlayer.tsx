@@ -17,7 +17,8 @@ export const MiniBottomPlayer: React.FC = () => {
     setIsControlPanelOpen,
     radioData,
     sleepTimerRemainingSec,
-    setSleepTimer
+    setSleepTimer,
+    activePodcast
   } = useRadio();
 
   const [showMiniPlayer, setShowMiniPlayer] = useState(false);
@@ -79,7 +80,13 @@ export const MiniBottomPlayer: React.FC = () => {
               overflow: 'hidden'
             }}
           >
-            {radioData?.capa_musica ? (
+            {activePodcast?.coverImage ? (
+              <img
+                src={activePodcast.coverImage}
+                alt={activePodcast.title}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : radioData?.capa_musica ? (
               <img
                 src={radioData.capa_musica}
                 alt="Capa"
@@ -104,10 +111,10 @@ export const MiniBottomPlayer: React.FC = () => {
                   color: 'var(--gold)'
                 }}
               >
-                {isPlaying ? (radioData?.status ? String(radioData.status) : 'Ao Vivo no Ar') : 'Rádio Pausada'}
+                {activePodcast ? 'Podcast / Pregação' : (isPlaying ? (radioData?.status ? String(radioData.status) : 'Ao Vivo no Ar') : 'Rádio Pausada')}
               </span>
               <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px' }}>
-                • {radioData?.titulo || 'FM 104.9'}
+                • {activePodcast ? (activePodcast.preacher || 'Mensagem') : (radioData?.titulo || 'FM 104.9')}
               </span>
             </div>
             <p
@@ -122,7 +129,7 @@ export const MiniBottomPlayer: React.FC = () => {
                 textOverflow: 'ellipsis'
               }}
             >
-              {radioData?.musica_atual || (isPlaying ? currentTrackInfo.title : currentShow.title)}
+              {activePodcast ? activePodcast.title : (radioData?.musica_atual || (isPlaying ? currentTrackInfo.title : currentShow.title))}
             </p>
           </div>
         </div>

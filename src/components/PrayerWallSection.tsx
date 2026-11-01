@@ -36,10 +36,16 @@ export const PrayerWallSection: React.FC = () => {
     }
   });
 
+  const [optimisticAdditions, setOptimisticAdditions] = useState<Record<string, number>>({});
+
   const handlePray = (id: string) => {
     if (prayedIds.includes(id)) return;
     const next = [...prayedIds, id];
     setPrayedIds(next);
+    setOptimisticAdditions((prev) => ({
+      ...prev,
+      [id]: (prev[id] || 0) + 1
+    }));
     try {
       localStorage.setItem('vozdafe_prayed_ids', JSON.stringify(next));
     } catch {
@@ -56,7 +62,7 @@ export const PrayerWallSection: React.FC = () => {
   const [content, setContent] = useState('');
   const [formSuccess, setFormSuccess] = useState(false);
 
-  const categories: Array<'Todas' | PrayerRequest['category']> = [
+  const allCategories: Array<'Todas' | PrayerRequest['category']> = [
     'Todas',
     'Saúde',
     'Família',
@@ -65,6 +71,19 @@ export const PrayerWallSection: React.FC = () => {
     'Causas Urgentes',
     'Gratidão'
   ];
+
+  // Only show categories that have at least one registered prayer request
+  const categories = [
+    'Todas',
+    ...allCategories.filter((cat) => cat !== 'Todas' && prayerRequests.some((req) => req.category === cat))
+  ];
+
+  // If currently selected category has no requests, reset to 'Todas'
+  useEffect(() => {
+    if (selectedCategory !== 'Todas' && !categories.includes(selectedCategory)) {
+      setSelectedCategory('Todas');
+    }
+  }, [categories, selectedCategory]);
 
   const filteredRequests = prayerRequests.filter((req) => {
     const matchesCategory = selectedCategory === 'Todas' || req.category === selectedCategory;
@@ -78,7 +97,9 @@ export const PrayerWallSection: React.FC = () => {
   const visibleRequests = filteredRequests.slice(0, visibleCount);
   const remainingCount = filteredRequests.length - visibleCount;
 
-  const totalIntercessions = prayerRequests.reduce((acc, curr) => acc + curr.prayersCount, 0);
+  const totalIntercessions = prayerRequests.reduce((acc, curr) => {
+    return acc + curr.prayersCount + (optimisticAdditions[curr.id] || 0);
+  }, 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -254,13 +275,18 @@ export const PrayerWallSection: React.FC = () => {
 
             {/* Card Footer: Prayer count and interactive prayer button */}
             <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs text-amber-400">
-                <Flame className="w-4 h-4 fill-amber-400/20" />
-                <span className="font-mono font-bold">{req.prayersCount}</span>
-                <span className="text-slate-400 text-[11px]">
-                  {req.prayersCount === 1 ? 'irmão orando' : 'irmãos orando'}
-                </span>
-              </div>
+              {(() => {
+                const effectiveCount = req.prayersCount + (optimisticAdditions[req.id] || 0);
+                return (
+                  <div className="flex items-center gap-1.5 text-xs text-amber-400">
+                    <Flame className="w-4 h-4 fill-amber-400/20" />
+                    <span className="font-mono font-bold">{effectiveCount}</span>
+                    <span className="text-slate-400 text-[11px]">
+                      {effectiveCount === 1 ? 'irmão orando' : 'irmãos orando'}
+                    </span>
+                  </div>
+                );
+              })()}
 
               {(() => {
                 const hasPrayed = prayedIds.includes(req.id);

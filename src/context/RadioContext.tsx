@@ -12,7 +12,7 @@ import {
 } from '../types';
 import { db, auth } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, setDoc } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, deleteDoc, doc, query, setDoc } from 'firebase/firestore';
 import {
   STREAM_QUALITIES,
   getCurrentShow,
@@ -987,9 +987,12 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!prayer) return;
     
     try {
-      await updateDoc(prayerRef, {
-        prayersCount: (prayer.prayersCount || 0) + 1
-      });
+      const newCount = (prayer.prayersCount || 0) + 1;
+      await setDoc(prayerRef, {
+        ...prayer,
+        prayersCount: newCount
+      }, { merge: true });
+
       try {
         confetti({
           particleCount: 25,
@@ -1015,7 +1018,13 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updatePrayerRequest = async (id: string, updates: Partial<PrayerRequest>) => {
     try {
-      await updateDoc(doc(db, 'prayerRequests', id), updates);
+      const prayerRef = doc(db, 'prayerRequests', id);
+      const existing = prayerRequests.find(p => p.id === id);
+      if (existing) {
+        await setDoc(prayerRef, { ...existing, ...updates }, { merge: true });
+      } else {
+        await setDoc(prayerRef, updates, { merge: true });
+      }
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `prayerRequests/${id}`);
     }
@@ -1043,7 +1052,13 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateSongRequestStatus = async (id: string, status: SongRequest['status']) => {
     try {
-      await updateDoc(doc(db, 'songRequests', id), { status });
+      const songRef = doc(db, 'songRequests', id);
+      const existing = songRequests.find(s => s.id === id);
+      if (existing) {
+        await setDoc(songRef, { ...existing, status }, { merge: true });
+      } else {
+        await setDoc(songRef, { status }, { merge: true });
+      }
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `songRequests/${id}`);
     }
@@ -1134,7 +1149,13 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateContactMessageStatus = async (id: string, status: ContactMessage['status']) => {
     try {
-      await updateDoc(doc(db, 'contactMessages', id), { status });
+      const msgRef = doc(db, 'contactMessages', id);
+      const existing = contactMessages.find(m => m.id === id);
+      if (existing) {
+        await setDoc(msgRef, { ...existing, status }, { merge: true });
+      } else {
+        await setDoc(msgRef, { status }, { merge: true });
+      }
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `contactMessages/${id}`);
     }

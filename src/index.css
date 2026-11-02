@@ -460,6 +460,23 @@ footer { color: rgba(255,255,255,.67); background: #0c211f; }
   .footer-note { text-align: left; }
   .footer-bottom { align-items: flex-start; flex-direction: column; justify-content: center; padding: 14px 0; }
 }
+
+/* Mobile Touch & Viewport Enhancements */
+@media (max-width: 640px) {
+  body, html {
+    overflow-x: hidden;
+  }
+  .wrap {
+    width: calc(100% - 24px);
+  }
+  button, input, select, textarea {
+    font-size: 16px !important; /* Prevents auto-zoom on iOS Safari */
+  }
+  .studio-floating-panel {
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }

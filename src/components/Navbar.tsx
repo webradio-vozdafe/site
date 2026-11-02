@@ -19,7 +19,9 @@ import { buildWhatsAppUrl } from '../utils/whatsapp';
 import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import { MobileDrawer } from './MobileDrawer';
 import { PWAInstallButton } from './PWAInstallButton';
+
 
 export const Navbar: React.FC = () => {
   const { activeTab, setActiveTab, isPlaying, togglePlay, setIsControlPanelOpen, stationSettings } = useRadio();
@@ -293,163 +295,7 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Mobile Navigation Drawer & Overlay */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
-          {/* Backdrop Overlay */}
-          <div
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300"
-            onClick={() => setMobileMenuOpen(false)}
-            aria-hidden="true"
-          />
-
-          {/* Slide-in Drawer Container */}
-          <div className="relative w-4/5 max-w-sm bg-slate-950 border-r border-amber-500/30 h-full flex flex-col justify-between p-6 shadow-2xl z-10 animate-in slide-in-from-left duration-300 overflow-y-auto">
-            <div>
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between pb-5 mb-5 border-b border-slate-800">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-900 border border-amber-500/40 p-1 flex items-center justify-center shadow-md">
-                    <img
-                      src="/assets/aistudio/Logotipo_Dourado_Voz_da_F__4a6f8aec.png"
-                      alt="Voz da Fé"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <div>
-                    <span className="font-serif-title text-lg font-extrabold text-white tracking-wide block">
-                      VOZ DA FÉ
-                    </span>
-                    <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest">
-                      FM 104.9 MHz
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-xl bg-slate-900 text-slate-400 hover:text-white border border-slate-800 cursor-pointer"
-                  aria-label="Fechar menu"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Station Live Banner */}
-              <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300 mb-4">
-                <span className="flex items-center gap-2">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                  </span>
-                  <span className="text-emerald-400 font-bold uppercase text-[10px]">Ao Vivo</span>
-                </span>
-                <span className="text-amber-400 font-mono text-[11px] font-semibold">
-                  {RADIO_STATION.onlineListeners.toLocaleString('pt-BR')} ouvintes
-                </span>
-              </div>
-
-              {/* Mobile PWA Install CTA */}
-              <div className="mb-5 flex justify-center">
-                <PWAInstallButton />
-              </div>
-
-              {/* Navigation Items */}
-              <nav className="space-y-1.5">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeTab === item.id;
-                  return (
-                    <a
-                      key={item.id}
-                      href={item.path}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleSelectTab(item.id, item.path);
-                      }}
-                      className={`flex items-center gap-3.5 w-full px-4 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 font-bold'
-                          : 'text-slate-300 hover:bg-slate-900 hover:text-white'
-                      }`}
-                    >
-                      <Icon className={`w-5 h-5 ${isActive ? 'text-slate-950' : 'text-amber-400'}`} />
-                      <span>{item.label}</span>
-                    </a>
-                  );
-                })}
-              </nav>
-
-              {/* User Account / Admin Links */}
-              <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
-                {isLoggedIn ? (
-                  <>
-                    <a
-                      href="/perfil"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleSelectTab('perfil', '/perfil');
-                      }}
-                      className={`flex items-center gap-3.5 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                        activeTab === 'perfil'
-                          ? 'bg-amber-500 text-slate-950 font-bold'
-                          : 'text-slate-300 hover:bg-slate-900'
-                      }`}
-                    >
-                      <User className="w-5 h-5 text-amber-400" />
-                      <span>Meu Perfil</span>
-                    </a>
-                    {isAdmin && (
-                      <button
-                        onClick={() => {
-                          setIsControlPanelOpen(true);
-                          setMobileMenuOpen(false);
-                          handleSelectTab('ao-vivo', '/estudio');
-                        }}
-                        className="flex items-center gap-3.5 w-full px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-900 cursor-pointer"
-                      >
-                        <Users className="w-5 h-5 text-amber-400" />
-                        <span>Painel do Estúdio</span>
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <a
-                    href="/login"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleSelectTab('login', '/login');
-                    }}
-                    className="flex items-center gap-3.5 w-full px-4 py-3 rounded-xl text-sm font-medium text-amber-300 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 cursor-pointer"
-                  >
-                    <User className="w-5 h-5 text-amber-400" />
-                    <span>Entrar / Cadastrar</span>
-                  </a>
-                )}
-              </div>
-            </div>
-
-            {/* Drawer Footer Actions */}
-            <div className="pt-6 border-t border-slate-800 space-y-3">
-              <a
-                href={buildWhatsAppUrl(stationSettings.whatsapp, 'Paz do Senhor! Estou ouvindo a Rádio Vóz da Fé!')}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2.5 w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-lg shadow-emerald-950 cursor-pointer"
-                title={`Falar no WhatsApp da Rádio: ${stationSettings.whatsapp}`}
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>WhatsApp do Estúdio</span>
-              </a>
-
-              <p className="text-[10px] text-center text-slate-500">
-                Rádio Vóz da Fé © 2026 • FM 104.9 MHz
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      <MobileDrawer isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} isLoggedIn={isLoggedIn} />
     </header>
   );
 };

@@ -29,6 +29,7 @@ import { ScheduleSection } from './components/ScheduleSection';
 import { PrayerWallSection } from './components/PrayerWallSection';
 import { SongRequestSection } from './components/SongRequestSection';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { BottomNavigation } from './components/BottomNavigation';
 
 const MainView: React.FC = () => {
   useEffect(() => {
@@ -1093,6 +1094,9 @@ const MainView: React.FC = () => {
 
       {/* Sticky Mini Bottom Player when scrolling */}
       <MiniBottomPlayer />
+
+      {/* Bottom Mobile Navigation */}
+      <BottomNavigation />
 
       {/* PWA Offline Connectivity Indicator */}
       <OfflineIndicator />

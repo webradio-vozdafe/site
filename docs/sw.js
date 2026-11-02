@@ -81,15 +81,15 @@ define(['./workbox-afac4cd2'], (function (workbox) { 'use strict';
     "revision": "402b66900e731ca748771b6fc5e7a068"
   }, {
     "url": "index.html",
-    "revision": "711dc201b0af9b347f5890fcb095f33b"
+    "revision": "1b7b9260b01b76d1a89f7dc9bf2b095f"
   }, {
     "url": "404.html",
     "revision": "d60e17824a55358752d42b0e100a5e25"
   }, {
-    "url": "assets/index-KHCM9zWt.js",
+    "url": "assets/index-Brdd5hDQ.css",
     "revision": null
   }, {
-    "url": "assets/index-DvAccpo0.css",
+    "url": "assets/index-B3FnjT2m.js",
     "revision": null
   }, {
     "url": "assets/Logotipo_Dourado_Voz_da_F__4a6f8aec-oU0tfiOp.png",
@@ -110,10 +110,22 @@ define(['./workbox-afac4cd2'], (function (workbox) { 'use strict';
     "url": "assets/aistudio/image_992b90f9.png",
     "revision": null
   }, {
+    "url": "assets/aistudio/image_8a885566.png",
+    "revision": null
+  }, {
     "url": "assets/aistudio/image_799fbca7.png",
     "revision": null
   }, {
+    "url": "assets/aistudio/image_4220d01d.png",
+    "revision": null
+  }, {
     "url": "assets/aistudio/image_0d88ec63.png",
+    "revision": null
+  }, {
+    "url": "assets/aistudio/Mockup_elegante_da_Voz_da_F__f7d7ef7a.png",
+    "revision": null
+  }, {
+    "url": "assets/aistudio/Mockup_do_App_Voz_da_F__319fd1a6.png",
     "revision": null
   }, {
     "url": "assets/aistudio/Logotipo_Dourado_Voz_da_F__4a6f8aec.png",

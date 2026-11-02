@@ -1,56 +1,149 @@
-const CACHE_NAME = 'vozdafe-v1';
-const urlsToCache = [
-  '/',
-  '/index.html'
-];
+/**
+ * Copyright 2018 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
-  );
-  self.skipWaiting();
-});
+// If the loader is already loaded, just stop.
+if (!self.define) {
+  let registry = {};
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
-});
+  // Used for `eval` and `importScripts` where we can't get script URL by other means.
+  // In both cases, it's safe to use a global var because those functions are synchronous.
+  let nextDefineUri;
 
-self.addEventListener('fetch', (event) => {
-  if (event.request.url.includes('/api/')) {
-    return;
-  }
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    }).catch(() => {
-      if (event.request.mode === 'navigate') {
-        return caches.match('/');
-      }
-    })
-  );
-});
-
-// Background Sync for offline scheduled reminders / prayer requests
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-prayer-requests') {
-    event.waitUntil(
-      // Perform background sync logic or notify clients
-      console.log('Background sync triggered for prayer requests')
+  const singleRequire = (uri, parentUri) => {
+    uri = new URL(uri + ".js", parentUri).href;
+    return registry[uri] || (
+      
+        new Promise(resolve => {
+          if ("document" in self) {
+            const script = document.createElement("script");
+            script.src = uri;
+            script.onload = resolve;
+            document.head.appendChild(script);
+          } else {
+            nextDefineUri = uri;
+            importScripts(uri);
+            resolve();
+          }
+        })
+      
+      .then(() => {
+        let promise = registry[uri];
+        if (!promise) {
+          throw new Error(`Module ${uri} didn’t register its module`);
+        }
+        return promise;
+      })
     );
-  }
-});
-
-// Push notification listener
-self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : { title: 'Voz da Fé', body: 'Nova transmissão ao vivo iniciada!' };
-  const options = {
-    body: data.body,
-    icon: '/favicon.ico',
-    badge: '/favicon.ico'
   };
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
-});
+
+  self.define = (depsNames, factory) => {
+    const uri = nextDefineUri || ("document" in self ? document.currentScript.src : "") || location.href;
+    if (registry[uri]) {
+      // Module is already loading or loaded.
+      return;
+    }
+    let exports = {};
+    const require = depUri => singleRequire(depUri, uri);
+    const specialDeps = {
+      module: { uri },
+      exports,
+      require
+    };
+    registry[uri] = Promise.all(depsNames.map(
+      depName => specialDeps[depName] || require(depName)
+    )).then(deps => {
+      factory(...deps);
+      return exports;
+    });
+  };
+}
+define(['./workbox-afac4cd2'], (function (workbox) { 'use strict';
+
+  self.skipWaiting();
+  workbox.clientsClaim();
+  /**
+   * The precacheAndRoute() method efficiently caches and responds to
+   * requests for URLs in the manifest.
+   * See https://goo.gl/S9QRab
+   */
+  workbox.precacheAndRoute([{
+    "url": "registerSW.js",
+    "revision": "402b66900e731ca748771b6fc5e7a068"
+  }, {
+    "url": "index.html",
+    "revision": "711dc201b0af9b347f5890fcb095f33b"
+  }, {
+    "url": "404.html",
+    "revision": "d60e17824a55358752d42b0e100a5e25"
+  }, {
+    "url": "assets/index-KHCM9zWt.js",
+    "revision": null
+  }, {
+    "url": "assets/index-DvAccpo0.css",
+    "revision": null
+  }, {
+    "url": "assets/Logotipo_Dourado_Voz_da_F__4a6f8aec-oU0tfiOp.png",
+    "revision": null
+  }, {
+    "url": "assets/aistudio/index_51b4d7b8.html",
+    "revision": null
+  }, {
+    "url": "assets/aistudio/image_d904e33a.png",
+    "revision": null
+  }, {
+    "url": "assets/aistudio/image_d7de9992.png",
+    "revision": null
+  }, {
+    "url": "assets/aistudio/image_a6a9958e.png",
+    "revision": null
+  }, {
+    "url": "assets/aistudio/image_992b90f9.png",
+    "revision": null
+  }, {
+    "url": "assets/aistudio/image_799fbca7.png",
+    "revision": null
+  }, {
+    "url": "assets/aistudio/image_0d88ec63.png",
+    "revision": null
+  }, {
+    "url": "assets/aistudio/Logotipo_Dourado_Voz_da_F__4a6f8aec.png",
+    "revision": null
+  }, {
+    "url": "assets/aistudio/Logotipo_Dourado_Voz_da_F__4a6f8aec.png",
+    "revision": "dea168984ad16e744d6c92ac1c1ba788"
+  }, {
+    "url": "manifest.webmanifest",
+    "revision": "6fbc4f4431fb83908a5c58c89e76b9bf"
+  }], {});
+  workbox.cleanupOutdatedCaches();
+  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html")));
+  workbox.registerRoute(/^https:\/\/fonts\.googleapis\.com\/.*/i, new workbox.CacheFirst({
+    "cacheName": "google-fonts-cache",
+    plugins: [new workbox.ExpirationPlugin({
+      maxEntries: 10,
+      maxAgeSeconds: 31536000
+    }), new workbox.CacheableResponsePlugin({
+      statuses: [0, 200]
+    })]
+  }), 'GET');
+  workbox.registerRoute(/^https:\/\/fonts\.gstatic\.com\/.*/i, new workbox.CacheFirst({
+    "cacheName": "gstatic-fonts-cache",
+    plugins: [new workbox.ExpirationPlugin({
+      maxEntries: 10,
+      maxAgeSeconds: 31536000
+    }), new workbox.CacheableResponsePlugin({
+      statuses: [0, 200]
+    })]
+  }), 'GET');
+
+}));

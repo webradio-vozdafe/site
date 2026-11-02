@@ -28,6 +28,7 @@ import { ProfileView } from './components/ProfileView';
 import { ScheduleSection } from './components/ScheduleSection';
 import { PrayerWallSection } from './components/PrayerWallSection';
 import { SongRequestSection } from './components/SongRequestSection';
+import { OfflineIndicator } from './components/OfflineIndicator';
 
 const MainView: React.FC = () => {
   useEffect(() => {
@@ -1092,6 +1093,9 @@ const MainView: React.FC = () => {
 
       {/* Sticky Mini Bottom Player when scrolling */}
       <MiniBottomPlayer />
+
+      {/* PWA Offline Connectivity Indicator */}
+      <OfflineIndicator />
 
       {/* Floating Studio Trigger Button */}
       {isLoggedIn && (

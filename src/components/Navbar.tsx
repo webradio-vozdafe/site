@@ -19,6 +19,7 @@ import { buildWhatsAppUrl } from '../utils/whatsapp';
 import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import { PWAInstallButton } from './PWAInstallButton';
 
 export const Navbar: React.FC = () => {
   const { activeTab, setActiveTab, isPlaying, togglePlay, setIsControlPanelOpen, stationSettings } = useRadio();
@@ -191,6 +192,9 @@ export const Navbar: React.FC = () => {
               </span>
             </div>
 
+            {/* PWA Install Button */}
+            <PWAInstallButton />
+
             {/* Direct WhatsApp Studio */}
             <a
               href={buildWhatsAppUrl(stationSettings.whatsapp, 'Paz do Senhor! Estou ouvindo a Rádio Vóz da Fé e quero deixar meu abraço!')}
@@ -333,7 +337,7 @@ export const Navbar: React.FC = () => {
               </div>
 
               {/* Station Live Banner */}
-              <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300 mb-6">
+              <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300 mb-4">
                 <span className="flex items-center gap-2">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -344,6 +348,11 @@ export const Navbar: React.FC = () => {
                 <span className="text-amber-400 font-mono text-[11px] font-semibold">
                   {RADIO_STATION.onlineListeners.toLocaleString('pt-BR')} ouvintes
                 </span>
+              </div>
+
+              {/* Mobile PWA Install CTA */}
+              <div className="mb-5 flex justify-center">
+                <PWAInstallButton />
               </div>
 
               {/* Navigation Items */}

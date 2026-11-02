@@ -487,10 +487,114 @@ const MainView: React.FC = () => {
             aria-label="VÓZ DA FÉ — início"
             onClick={(e) => handleNavClick(e, '/inicio')}
           >
-            <svg className="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-              <path d="M24 15v21M17 22h14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-              <path d="M12 15a17 17 0 0 0 0 18M36 15a17 17 0 0 1 0 18M7 10a24 24 0 0 0 0 28M41 10a24 24 0 0 1 0 28" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity=".75" />
-            </svg>
+
+<svg
+  className="brand-mark"
+  viewBox="0 0 512 512"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+  aria-hidden="true"
+>
+  <defs>
+    <linearGradient id="goldGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stopColor="#FFF0A6" />
+      <stop offset="25%" stopColor="#FFD45C" />
+      <stop offset="55%" stopColor="#D99618" />
+      <stop offset="80%" stopColor="#FFC94D" />
+      <stop offset="100%" stopColor="#A96708" />
+    </linearGradient>
+
+    <linearGradient id="micGradient" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stopColor="#D58A13" />
+      <stop offset="45%" stopColor="#FFE58A" />
+      <stop offset="75%" stopColor="#FFC23D" />
+      <stop offset="100%" stopColor="#A96508" />
+    </linearGradient>
+
+    <filter id="goldShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" />
+    </filter>
+  </defs>
+
+  {/* Anéis externos */}
+  <g
+    stroke="url(#goldGradient)"
+    strokeWidth="3"
+    opacity="0.95"
+  >
+    <circle cx="256" cy="256" r="231" />
+    <circle cx="256" cy="256" r="211" />
+  </g>
+
+  {/* Ondas sonoras laterais */}
+  <g
+    stroke="url(#goldGradient)"
+    strokeWidth="15"
+    strokeLinecap="round"
+  >
+    <path d="M126 170 C72 220 72 292 126 342" />
+    <path d="M155 190 C116 229 116 283 155 322" />
+    <path d="M183 215 C156 239 156 273 183 297" />
+
+    <path d="M386 170 C440 220 440 292 386 342" />
+    <path d="M357 190 C396 229 396 283 357 322" />
+    <path d="M329 215 C356 239 356 273 329 297" />
+  </g>
+
+  {/* Microfone */}
+  <g stroke="url(#goldGradient)" strokeWidth="5">
+    <rect
+      x="193"
+      y="112"
+      width="126"
+      height="244"
+      rx="63"
+      fill="url(#micGradient)"
+    />
+
+    {/* Grade do microfone */}
+    <g
+      stroke="#A66A0D"
+      strokeWidth="7"
+      strokeLinecap="round"
+    >
+      <path d="M218 153 H239 M273 153 H294" />
+      <path d="M218 176 H239 M273 176 H294" />
+      <path d="M218 199 H239 M273 199 H294" />
+      <path d="M218 222 H239 M273 222 H294" />
+    </g>
+
+    {/* Cruz central */}
+    <path
+      d="M256 228 V320 M232 252 H280"
+      stroke="#69400A"
+      strokeWidth="15"
+      strokeLinecap="square"
+    />
+
+    {/* Suporte do microfone */}
+    <path
+      d="M178 245 V286 C178 345 211 377 256 377 C301 377 334 345 334 286 V245"
+      stroke="url(#goldGradient)"
+      strokeWidth="15"
+      strokeLinecap="round"
+    />
+
+    {/* Haste e base */}
+    <path
+      d="M256 377 V422"
+      stroke="url(#goldGradient)"
+      strokeWidth="17"
+      strokeLinecap="round"
+    />
+
+    <path
+      d="M197 448 Q197 425 220 425 H292 Q315 425 315 448 Z"
+      fill="url(#goldGradient)"
+    />
+  </g>
+</svg>
+
             <span className="brand-name">VÓZ <span>DA FÉ</span></span>
           </a>
 

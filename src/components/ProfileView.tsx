@@ -141,7 +141,9 @@ export const ProfileView: React.FC = () => {
   const handleLogout = async () => {
     await signOut(auth);
     setActiveTab('ao-vivo');
-    window.location.hash = '';
+    if (typeof window !== 'undefined' && window.location.pathname !== '/inicio') {
+      window.history.pushState(null, '', '/inicio');
+    }
   };
 
   if (!user) {
@@ -164,12 +166,20 @@ export const ProfileView: React.FC = () => {
           <User className="w-16 h-16 text-[var(--gold)] mx-auto mb-4 bg-[rgba(12,33,31,0.8)] p-3 rounded-2xl border border-[rgba(230,184,107,0.2)]" />
           <h2 className="text-xl font-serif font-bold mb-2 text-white">Conta de Usuário</h2>
           <p className="text-slate-300 text-xs mb-6">Você não está conectado no momento.</p>
-          <button 
-            onClick={() => setActiveTab('login')} 
-            className="w-full bg-[var(--gold)] hover:bg-[#d4a355] text-slate-950 font-bold py-3 px-4 rounded-xl transition-all cursor-pointer text-sm shadow-lg shadow-black/30"
+          <a
+            href="/login"
+            onClick={(e) => {
+              e.preventDefault();
+              setActiveTab('login');
+              if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+                window.history.pushState(null, '', '/login');
+              }
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="block text-center w-full bg-[var(--gold)] hover:bg-[#d4a355] text-slate-950 font-bold py-3 px-4 rounded-xl transition-all cursor-pointer text-sm shadow-lg shadow-black/30"
           >
             Fazer Login
-          </button>
+          </a>
         </div>
       </div>
     );
@@ -193,12 +203,20 @@ export const ProfileView: React.FC = () => {
       >
         {/* Top Navigation / Badge */}
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-[rgba(255,255,255,0.1)]">
-          <button 
-            onClick={() => { setActiveTab('ao-vivo'); window.location.hash = ''; }}
+          <a
+            href="/inicio"
+            onClick={(e) => {
+              e.preventDefault();
+              setActiveTab('ao-vivo');
+              if (typeof window !== 'undefined' && window.location.pathname !== '/inicio') {
+                window.history.pushState(null, '', '/inicio');
+              }
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
             className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 text-[var(--gold)]" /> Voltar à Rádio
-          </button>
+          </a>
           <span className="text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded bg-[rgba(230,184,107,0.15)] text-[var(--gold)] border border-[rgba(230,184,107,0.3)]">
             Meu Perfil
           </span>
@@ -371,13 +389,21 @@ export const ProfileView: React.FC = () => {
           )}
 
           <div className="grid grid-cols-2 gap-3">
-            <button 
-              onClick={() => setActiveTab('ao-vivo')}
+            <a
+              href="/inicio"
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveTab('ao-vivo');
+                if (typeof window !== 'undefined' && window.location.pathname !== '/inicio') {
+                  window.history.pushState(null, '', '/inicio');
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               className="flex items-center justify-center gap-2 bg-[rgba(12,33,31,0.8)] hover:bg-[rgba(12,33,31)] text-slate-200 border border-[rgba(255,255,255,0.1)] py-2.5 px-3 rounded-xl transition-all cursor-pointer text-xs font-semibold"
             >
               <Radio className="w-3.5 h-3.5 text-[var(--gold)]" />
               <span>Ouvir Rádio</span>
-            </button>
+            </a>
 
             <button 
               onClick={handleLogout} 

@@ -422,25 +422,35 @@ export const LivePlayerHero: React.FC = () => {
 
             {/* Quick action buttons */}
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
+              <a
+                href="/oracao"
+                onClick={(e) => {
+                  e.preventDefault();
                   setActiveTab('oracao');
-                  window.scrollTo({ top: 400, behavior: 'smooth' });
+                  if (typeof window !== 'undefined' && window.location.pathname !== '/oracao') {
+                    window.history.pushState(null, '', '/oracao');
+                  }
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium transition-colors"
               >
                 + Pedir Oração
-              </button>
+              </a>
 
-              <button
-                onClick={() => {
+              <a
+                href="/pedir-hino"
+                onClick={(e) => {
+                  e.preventDefault();
                   setActiveTab('pedir-hino');
-                  window.scrollTo({ top: 400, behavior: 'smooth' });
+                  if (typeof window !== 'undefined' && window.location.pathname !== '/pedir-hino') {
+                    window.history.pushState(null, '', '/pedir-hino');
+                  }
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium transition-colors"
               >
                 Pedir Hino
-              </button>
+              </a>
             </div>
 
           </div>

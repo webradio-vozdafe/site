@@ -146,12 +146,20 @@ export const LoginView: React.FC = () => {
                 </>
               )}
             </button>
-            <button 
-              onClick={() => { setActiveTab('ao-vivo'); window.location.hash = ''; }}
-              className="w-full py-2.5 text-xs text-slate-300 hover:text-[var(--gold)] transition-colors cursor-pointer"
+            <a
+              href="/inicio"
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveTab('ao-vivo');
+                if (typeof window !== 'undefined' && window.location.pathname !== '/inicio') {
+                  window.history.pushState(null, '', '/inicio');
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="block text-center w-full py-2.5 text-xs text-slate-300 hover:text-[var(--gold)] transition-colors cursor-pointer"
             >
               Voltar para a programação ao vivo
-            </button>
+            </a>
           </div>
         ) : (
           <div className="space-y-4">
@@ -180,12 +188,20 @@ export const LoginView: React.FC = () => {
               <span>Abrir Painel de Controle do Estúdio</span>
             </button>
 
-            <button 
-              onClick={() => { setActiveTab('ao-vivo'); window.location.hash = ''; }}
+            <a
+              href="/inicio"
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveTab('ao-vivo');
+                if (typeof window !== 'undefined' && window.location.pathname !== '/inicio') {
+                  window.history.pushState(null, '', '/inicio');
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               className="w-full flex items-center justify-center gap-2 bg-[rgba(12,33,31,0.8)] hover:bg-[rgba(12,33,31)] text-slate-200 border border-[rgba(255,255,255,0.1)] py-2.5 px-4 rounded-xl transition-all cursor-pointer text-xs font-semibold"
             >
               Voltar à Rádio
-            </button>
+            </a>
 
             <button 
               onClick={handleLogout} 

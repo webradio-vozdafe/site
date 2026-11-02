@@ -54,28 +54,36 @@ export const Navbar: React.FC = () => {
   }, [mobileMenuOpen]);
 
   const navItems = [
-    { id: 'ao-vivo', label: 'Ao Vivo', icon: Radio },
-    { id: 'programacao', label: 'Programação', icon: Calendar },
-    { id: 'oracao', label: 'Mural de Oração', icon: HeartHandshake },
-    { id: 'pedir-hino', label: 'Pedir Hino', icon: Music },
-    { id: 'devocionais', label: 'Devocionais & Mensagens', icon: BookOpen },
-    { id: 'sobre', label: 'Sobre', icon: Info },
+    { id: 'ao-vivo', path: '/inicio', label: 'Ao Vivo', icon: Radio },
+    { id: 'programacao', path: '/programacao', label: 'Programação', icon: Calendar },
+    { id: 'oracao', path: '/oracao', label: 'Mural de Oração', icon: HeartHandshake },
+    { id: 'pedir-hino', path: '/pedir-hino', label: 'Pedir Hino', icon: Music },
+    { id: 'devocionais', path: '/devocionais', label: 'Devocionais & Mensagens', icon: BookOpen },
+    { id: 'sobre', path: '/sobre', label: 'Sobre', icon: Info },
   ];
 
-  const handleSelectTab = (id: string) => {
+  const handleSelectTab = (id: string, customPath?: string) => {
     setActiveTab(id);
     setMobileMenuOpen(false);
+    const targetPath = customPath || (id === 'ao-vivo' ? '/inicio' : `/${id}`);
+    if (typeof window !== 'undefined' && window.location.pathname !== targetPath) {
+      window.history.pushState(null, '', targetPath);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-amber-500/20 shadow-lg shadow-black/40 px-[18px] sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-amber-500/20 shadow-lg shadow-black/40 px-[18px] sm:px-6 lg:px-8 mt-5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
           {/* Logo & Station Title */}
-          <div
-            onClick={() => handleSelectTab('ao-vivo')}
+          <a
+            href="/inicio"
+            onClick={(e) => {
+              e.preventDefault();
+              handleSelectTab('ao-vivo', '/inicio');
+            }}
             className="flex items-center gap-3 cursor-pointer group select-none"
           >
             <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-slate-950/80 border border-amber-500/40 p-1 shadow-md shadow-amber-500/20 group-hover:shadow-amber-500/40 transition-all duration-300">
@@ -105,7 +113,7 @@ export const Navbar: React.FC = () => {
                 A rádio que abençoa a sua vida
               </p>
             </div>
-          </div>
+          </a>
 
           {/* Desktop Nav Links */}
           <nav id="site-nav" className="hidden lg:flex items-center gap-1">
@@ -113,9 +121,13 @@ export const Navbar: React.FC = () => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
-                <button
+                <a
                   key={item.id}
-                  onClick={() => handleSelectTab(item.id)}
+                  href={item.path}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleSelectTab(item.id, item.path);
+                  }}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     isActive
                       ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-semibold'
@@ -124,13 +136,17 @@ export const Navbar: React.FC = () => {
                 >
                   <Icon className={`w-4 h-4 ${isActive ? 'text-slate-950' : 'text-amber-400'}`} />
                   {item.label}
-                </button>
+                </a>
               );
             })}
 
-            {isLoggedIn && (
-              <button
-                onClick={() => handleSelectTab('perfil')}
+            {isLoggedIn ? (
+              <a
+                href="/perfil"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSelectTab('perfil', '/perfil');
+                }}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   activeTab === 'perfil'
                     ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-semibold'
@@ -139,7 +155,23 @@ export const Navbar: React.FC = () => {
               >
                 <User className={`w-4 h-4 ${activeTab === 'perfil' ? 'text-slate-950' : 'text-amber-400'}`} />
                 <span>Perfil</span>
-              </button>
+              </a>
+            ) : (
+              <a
+                href="/login"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSelectTab('login', '/login');
+                }}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeTab === 'login'
+                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-semibold'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <User className={`w-4 h-4 ${activeTab === 'login' ? 'text-slate-950' : 'text-amber-400'}`} />
+                <span>Entrar</span>
+              </a>
             )}
           </nav>
 
@@ -174,38 +206,40 @@ export const Navbar: React.FC = () => {
             {/* User Profile & Studio Panel or Login */}
             {isLoggedIn ? (
               <>
-                <button
-                  onClick={() => {
-                    setActiveTab('perfil');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                <a
+                  href="/perfil"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleSelectTab('perfil', '/perfil');
                   }}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-600 text-xs font-medium transition-all"
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-600 text-xs font-medium transition-all cursor-pointer"
                 >
                   <User className="w-3.5 h-3.5" />
                   <span>Perfil</span>
-                </button>
+                </a>
                 <button
                   onClick={() => {
                     setIsControlPanelOpen(true);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    handleSelectTab('ao-vivo', '/estudio');
                   }}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-600 text-xs font-medium transition-all"
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-600 text-xs font-medium transition-all cursor-pointer"
                 >
                   <Users className="w-3.5 h-3.5" />
                   <span>Painel do Estúdio</span>
                 </button>
               </>
             ) : (
-              <button
-                onClick={() => {
-                  setActiveTab('login');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+              <a
+                href="/login"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSelectTab('login', '/login');
                 }}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 text-xs font-medium transition-all"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 text-xs font-medium transition-all cursor-pointer"
               >
                 <User className="w-3.5 h-3.5" />
                 <span>Entrar</span>
-              </button>
+              </a>
             )}
 
 
@@ -318,9 +352,13 @@ export const Navbar: React.FC = () => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
                   return (
-                    <button
+                    <a
                       key={item.id}
-                      onClick={() => handleSelectTab(item.id)}
+                      href={item.path}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSelectTab(item.id, item.path);
+                      }}
                       className={`flex items-center gap-3.5 w-full px-4 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                         isActive
                           ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 font-bold'
@@ -329,7 +367,7 @@ export const Navbar: React.FC = () => {
                     >
                       <Icon className={`w-5 h-5 ${isActive ? 'text-slate-950' : 'text-amber-400'}`} />
                       <span>{item.label}</span>
-                    </button>
+                    </a>
                   );
                 })}
               </nav>
@@ -338,8 +376,12 @@ export const Navbar: React.FC = () => {
               <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
                 {isLoggedIn ? (
                   <>
-                    <button
-                      onClick={() => handleSelectTab('perfil')}
+                    <a
+                      href="/perfil"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSelectTab('perfil', '/perfil');
+                      }}
                       className={`flex items-center gap-3.5 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                         activeTab === 'perfil'
                           ? 'bg-amber-500 text-slate-950 font-bold'
@@ -348,12 +390,13 @@ export const Navbar: React.FC = () => {
                     >
                       <User className="w-5 h-5 text-amber-400" />
                       <span>Meu Perfil</span>
-                    </button>
+                    </a>
                     {isAdmin && (
                       <button
                         onClick={() => {
                           setIsControlPanelOpen(true);
                           setMobileMenuOpen(false);
+                          handleSelectTab('ao-vivo', '/estudio');
                         }}
                         className="flex items-center gap-3.5 w-full px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-900 cursor-pointer"
                       >
@@ -363,13 +406,17 @@ export const Navbar: React.FC = () => {
                     )}
                   </>
                 ) : (
-                  <button
-                    onClick={() => handleSelectTab('login')}
+                  <a
+                    href="/login"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleSelectTab('login', '/login');
+                    }}
                     className="flex items-center gap-3.5 w-full px-4 py-3 rounded-xl text-sm font-medium text-amber-300 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 cursor-pointer"
                   >
                     <User className="w-5 h-5 text-amber-400" />
                     <span>Entrar / Cadastrar</span>
-                  </button>
+                  </a>
                 )}
               </div>
             </div>

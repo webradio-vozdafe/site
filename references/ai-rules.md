@@ -43,6 +43,7 @@ Você está proibido de:
 - inserir comentários ocultos;
 - mudar linguagem;
 - criar versões alternativas sem pedido.
+- não usar # nos links.
 
 ## PRIORIDADE
 A prioridade máxima é:

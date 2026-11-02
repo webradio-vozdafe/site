@@ -37,44 +37,100 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <button
-                  onClick={() => { setActiveTab('ao-vivo'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                <a
+                  href="/inicio"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveTab('ao-vivo');
+                    if (typeof window !== 'undefined' && window.location.pathname !== '/inicio') {
+                      window.history.pushState(null, '', '/inicio');
+                    }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   className="hover:text-amber-400 transition-colors"
                 >
                   Rádio Ao Vivo
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => { setActiveTab('programacao'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                <a
+                  href="/programacao"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveTab('programacao');
+                    if (typeof window !== 'undefined' && window.location.pathname !== '/programacao') {
+                      window.history.pushState(null, '', '/programacao');
+                    }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   className="hover:text-amber-400 transition-colors"
                 >
                   Grade de Programação
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => { setActiveTab('oracao'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                <a
+                  href="/oracao"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveTab('oracao');
+                    if (typeof window !== 'undefined' && window.location.pathname !== '/oracao') {
+                      window.history.pushState(null, '', '/oracao');
+                    }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   className="hover:text-amber-400 transition-colors"
                 >
                   Mural de Oração
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => { setActiveTab('pedir-hino'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                <a
+                  href="/pedir-hino"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveTab('pedir-hino');
+                    if (typeof window !== 'undefined' && window.location.pathname !== '/pedir-hino') {
+                      window.history.pushState(null, '', '/pedir-hino');
+                    }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   className="hover:text-amber-400 transition-colors"
                 >
-                  Pedir Louvor
-                </button>
+                  Pedir Hino
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => { setActiveTab('devocionais'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                <a
+                  href="/devocionais"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveTab('devocionais');
+                    if (typeof window !== 'undefined' && window.location.pathname !== '/devocionais') {
+                      window.history.pushState(null, '', '/devocionais');
+                    }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   className="hover:text-amber-400 transition-colors"
                 >
-                  Devocionais & Podcasts
-                </button>
+                  Devocionais & Mensagens
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/sobre"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveTab('sobre');
+                    if (typeof window !== 'undefined' && window.location.pathname !== '/sobre') {
+                      window.history.pushState(null, '', '/sobre');
+                    }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-amber-400 transition-colors"
+                >
+                  Sobre a Rádio
+                </a>
               </li>
             </ul>
           </div>

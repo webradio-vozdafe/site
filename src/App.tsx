@@ -95,94 +95,108 @@ const MainView: React.FC = () => {
   // Network Connectivity State & Auto Reconnect
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
-  // Hash Navigation Sync & Smooth Scrolling
+  // Clean Path Router & Route Synchronization
   useEffect(() => {
-    const handleHashSync = () => {
-      let hash = window.location.hash.replace('#', '').toLowerCase();
-      if (!hash) {
-        if (typeof window !== 'undefined') {
-          window.history.replaceState(null, '', '#inicio');
-          hash = 'inicio';
+    const handleRouteSync = () => {
+      let rawPath = window.location.pathname.replace(/^\/+/g, '').replace(/\/+$/g, '').toLowerCase();
+      let legacyHash = window.location.hash.replace('#', '').toLowerCase();
+
+      let targetRoute = legacyHash || rawPath;
+
+      // Default position is '/inicio'
+      if (!targetRoute || targetRoute === 'index.html' || targetRoute === 'home' || targetRoute === 'root') {
+        targetRoute = 'inicio';
+        if (typeof window !== 'undefined' && window.location.pathname !== '/inicio') {
+          window.history.replaceState(null, '', '/inicio');
         }
+      } else if (legacyHash && typeof window !== 'undefined') {
+        // Convert legacy hash /#inicio to clean path /inicio
+        window.history.replaceState(null, '', `/${legacyHash}`);
       }
 
-      // Studio Modal
-      if (['estudio', 'painel', 'admin'].includes(hash)) {
-        if (isLoggedIn) setIsControlPanelOpen(true);
-        return;
-      }
-
-      // Login / Profile dedicated views
-      if (['login', '/login'].includes(hash)) {
-        setActiveTab('login');
-        return;
-      }
-      if (['perfil', 'minha-conta'].includes(hash)) {
-        setActiveTab('perfil');
-        return;
-      }
-
-      // Main single page sections
-      const sectionTargets: { [key: string]: string } = {
-        'inicio': 'inicio',
-        'ao-vivo': 'inicio',
-        'home': 'inicio',
-        'tocando-agora': 'tocando-agora',
-        'musica': 'tocando-agora',
-        'programacao': 'programacao',
-        'grade': 'programacao',
-        'mensagem': 'mensagem',
-        'palavra': 'mensagem',
-        'versiculo': 'mensagem',
-        'oracao': 'oracao',
-        'mural': 'oracao',
-        'pedidos': 'oracao',
-        'contato': 'contato',
-        'fale-conosco': 'contato'
-      };
-
-      const targetId = sectionTargets[hash];
-      if (targetId) {
-        setActiveTab('ao-vivo');
-        setTimeout(() => {
-          const el = document.getElementById(targetId);
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          } else if (targetId === 'inicio') {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Route mapping
+      switch (targetRoute) {
+        case 'inicio':
+        case 'ao-vivo':
+          setActiveTab('ao-vivo');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          break;
+        case 'programacao':
+        case 'grade':
+          setActiveTab('programacao');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          break;
+        case 'oracao':
+        case 'mural':
+        case 'pedidos':
+          setActiveTab('oracao');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          break;
+        case 'pedir-hino':
+        case 'pedidos-hino':
+        case 'musica':
+          setActiveTab('pedir-hino');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          break;
+        case 'devocionais':
+        case 'mensagens':
+        case 'palavra':
+        case 'mensagem':
+          setActiveTab('devocionais');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          break;
+        case 'sobre':
+          setActiveTab('sobre');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          break;
+        case 'login':
+          setActiveTab('login');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          break;
+        case 'perfil':
+        case 'minha-conta':
+          setActiveTab('perfil');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          break;
+        case 'estudio':
+        case 'painel':
+        case 'admin':
+          if (isLoggedIn) setIsControlPanelOpen(true);
+          break;
+        default:
+          setActiveTab('ao-vivo');
+          if (typeof window !== 'undefined') {
+            window.history.replaceState(null, '', '/inicio');
           }
-        }, 80);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          break;
       }
     };
 
-    handleHashSync();
-    window.addEventListener('hashchange', handleHashSync);
-    return () => window.removeEventListener('hashchange', handleHashSync);
+    handleRouteSync();
+    window.addEventListener('popstate', handleRouteSync);
+    window.addEventListener('hashchange', handleRouteSync);
+    return () => {
+      window.removeEventListener('popstate', handleRouteSync);
+      window.removeEventListener('hashchange', handleRouteSync);
+    };
   }, [isLoggedIn, setActiveTab, setIsControlPanelOpen]);
 
-  // Garante a rolagem para o topo ao alterar de aba na página principal
-  useEffect(() => {
-    if (activeTab === 'ao-vivo' && (!window.location.hash || ['#', '#inicio', '#home', '#ao-vivo'].includes(window.location.hash))) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (['programacao', 'oracao', 'pedir-hino', 'devocionais', 'sobre'].includes(activeTab)) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [activeTab]);
-
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, targetRoute: string) => {
     e.preventDefault();
-    if (activeTab !== 'ao-vivo') {
-      setActiveTab('ao-vivo');
+    const cleanRoute = targetRoute.replace(/^\/+/g, '').replace('#', '').toLowerCase();
+    const cleanPath = `/${cleanRoute || 'inicio'}`;
+
+    if (typeof window !== 'undefined' && window.location.pathname !== cleanPath) {
+      window.history.pushState(null, '', cleanPath);
     }
-    window.history.pushState(null, '', `#${targetId}`);
-    setTimeout(() => {
-      const el = document.getElementById(targetId);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else if (targetId === 'inicio') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }, 60);
+
+    if (['inicio', 'ao-vivo'].includes(cleanRoute)) {
+      setActiveTab('ao-vivo');
+    } else if (['programacao', 'oracao', 'pedir-hino', 'devocionais', 'sobre', 'login', 'perfil'].includes(cleanRoute)) {
+      setActiveTab(cleanRoute);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
 
@@ -431,7 +445,7 @@ const MainView: React.FC = () => {
 
   return (
     <>
-      <a className="skip-link" href="#conteudo">Pular para o conteúdo</a>
+      <a className="skip-link" href="/inicio" onClick={(e) => { e.preventDefault(); document.getElementById('conteudo')?.scrollIntoView({ behavior: 'smooth' }); }}>Pular para o conteúdo</a>
 
       {/* Offline Connectivity Warning Banner */}
       {!isOnline && (
@@ -467,9 +481,9 @@ const MainView: React.FC = () => {
         <header className="header wrap">
           <a
             className="brand"
-            href="#inicio"
+            href="/inicio"
             aria-label="VÓZ DA FÉ — início"
-            onClick={(e) => handleNavClick(e, 'inicio')}
+            onClick={(e) => handleNavClick(e, '/inicio')}
           >
             <svg className="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
               <path d="M24 15v21M17 22h14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
@@ -479,12 +493,14 @@ const MainView: React.FC = () => {
           </a>
 
           <nav className="nav" id="site-nav" aria-label="Navegação principal">
-            <a href="#inicio" onClick={(e) => handleNavClick(e, 'inicio')}>Início</a>
-            <a href="#tocando-agora" onClick={(e) => handleNavClick(e, 'tocando-agora')}>Tocando Agora</a>
-            <a href="#programacao" onClick={(e) => handleNavClick(e, 'programacao')}>Programação</a>
-            <a href="#mensagem" onClick={(e) => handleNavClick(e, 'mensagem')}>Palavra do Dia</a>
-            <a href="#oracao" onClick={(e) => handleNavClick(e, 'oracao')}>Mural de Oração</a>
-            <a href="#contato" onClick={(e) => handleNavClick(e, 'contato')}>Contato</a>
+            <a href="/inicio" onClick={(e) => handleNavClick(e, '/inicio')}>Início</a>
+            <a href="/programacao" onClick={(e) => handleNavClick(e, '/programacao')}>Programação</a>
+            <a href="/oracao" onClick={(e) => handleNavClick(e, '/oracao')}>Mural de Oração</a>
+            <a href="/pedir-hino" onClick={(e) => handleNavClick(e, '/pedir-hino')}>Pedir Hino</a>
+            <a href="/devocionais" onClick={(e) => handleNavClick(e, '/devocionais')}>Palavra do Dia</a>
+            <a href="/sobre" onClick={(e) => handleNavClick(e, '/sobre')}>Sobre</a>
+            <a href="/login" onClick={(e) => handleNavClick(e, '/login')}>Entrar</a>
+            <a href="/perfil" onClick={(e) => handleNavClick(e, '/perfil')}>Perfil</a>
             
             {deferredPrompt && (
               <button
@@ -551,8 +567,8 @@ const MainView: React.FC = () => {
 
                 <a
                   className="text-link"
-                  href="#programacao"
-                  onClick={(e) => handleNavClick(e, 'programacao')}
+                  href="/programacao"
+                  onClick={(e) => handleNavClick(e, '/programacao')}
                 >
                   Conheça a programação <span aria-hidden="true">→</span>
                 </a>
@@ -1036,8 +1052,8 @@ const MainView: React.FC = () => {
         <div className="footer-main wrap">
           <a
             className="brand footer-brand"
-            href="#inicio"
-            onClick={(e) => handleNavClick(e, 'inicio')}
+            href="/inicio"
+            onClick={(e) => handleNavClick(e, '/inicio')}
           >
             <svg className="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
               <path d="M24 15v21M17 22h14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
@@ -1052,12 +1068,14 @@ const MainView: React.FC = () => {
         <div className="footer-bottom wrap">
           <span>© {new Date().getFullYear()} VÓZ DA FÉ. Feita com fé e carinho.</span>
           <div className="social-links">
-            <a href="#inicio" onClick={(e) => handleNavClick(e, 'inicio')}>Início</a>
-            <a href="#tocando-agora" onClick={(e) => handleNavClick(e, 'tocando-agora')}>No Ar</a>
-            <a href="#programacao" onClick={(e) => handleNavClick(e, 'programacao')}>Programação</a>
-            <a href="#mensagem" onClick={(e) => handleNavClick(e, 'mensagem')}>Palavra</a>
-            <a href="#oracao" onClick={(e) => handleNavClick(e, 'oracao')}>Oração</a>
-            <a href="#contato" onClick={(e) => handleNavClick(e, 'contato')}>Contato</a>
+            <a href="/inicio" onClick={(e) => handleNavClick(e, '/inicio')}>Início</a>
+            <a href="/programacao" onClick={(e) => handleNavClick(e, '/programacao')}>Programação</a>
+            <a href="/oracao" onClick={(e) => handleNavClick(e, '/oracao')}>Mural de Oração</a>
+            <a href="/pedir-hino" onClick={(e) => handleNavClick(e, '/pedir-hino')}>Pedir Hino</a>
+            <a href="/devocionais" onClick={(e) => handleNavClick(e, '/devocionais')}>Devocionais</a>
+            <a href="/sobre" onClick={(e) => handleNavClick(e, '/sobre')}>Sobre</a>
+            <a href="/login" onClick={(e) => handleNavClick(e, '/login')}>Entrar</a>
+            <a href="/perfil" onClick={(e) => handleNavClick(e, '/perfil')}>Perfil</a>
             {isLoggedIn && (
               <button
                 type="button"

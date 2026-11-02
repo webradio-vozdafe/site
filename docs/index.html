@@ -15,8 +15,21 @@
     <meta property="og:type" content="website" />
     <link rel="manifest" href="./assets/manifest-C-r1aiN0.json" />
     <title>VOZ DA FÉ — Uma voz que renova a sua fé.</title>
-    <script type="module" crossorigin src="./assets/index-Chf-z3vK.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-Bx2Uqwki.css">
+    <script>
+      // Single Page App redirect restoration for GitHub Pages clean URLs
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
+    <script type="module" crossorigin src="./assets/index-CCebHzQP.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-Dg6XCI2r.css">
   </head>
   <body>
     <div id="root"></div>

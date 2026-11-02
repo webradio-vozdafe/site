@@ -28,34 +28,19 @@ function copyRecursiveSync(src, dest) {
 
 try {
   if (fs.existsSync(distDir)) {
-    // 1. Copy dist to docs/
+    // 1. Copy dist/ to docs/ for GitHub Pages /docs folder option
     copyRecursiveSync(distDir, docsDir);
-    console.log('✓ Successfully copied dist/ to docs/ for GitHub Pages /docs folder option');
+    console.log('✓ Successfully copied dist/ to docs/ for GitHub Pages /docs folder deployment');
 
-    // 2. Copy dist/assets to root assets/
-    const distAssetsDir = path.join(distDir, 'assets');
-    const rootAssetsDir = path.join(rootDir, 'assets');
-    if (fs.existsSync(distAssetsDir)) {
-      copyRecursiveSync(distAssetsDir, rootAssetsDir);
-      console.log('✓ Successfully copied dist/assets/ to root assets/ for GitHub Pages root option');
-    }
-
-    // 3. Copy dist/index.html to root index.html
-    const distIndexHtml = path.join(distDir, 'index.html');
-    const rootIndexHtml = path.join(rootDir, 'index.html');
-    if (fs.existsSync(distIndexHtml)) {
-      fs.copyFileSync(distIndexHtml, rootIndexHtml);
-      console.log('✓ Successfully copied dist/index.html to root index.html for direct static hosting');
-    }
-
-    // 4. Copy 404.html & .nojekyll
-    ['404.html', '.nojekyll', 'manifest.json'].forEach((file) => {
+    // 2. Copy 404.html, .nojekyll, manifest.json to root if missing (without touching root index.html)
+    ['404.html', '.nojekyll'].forEach((file) => {
       const srcFile = path.join(distDir, file);
       const destFile = path.join(rootDir, file);
-      if (fs.existsSync(srcFile)) {
+      if (fs.existsSync(srcFile) && !fs.existsSync(destFile)) {
         fs.copyFileSync(srcFile, destFile);
       }
     });
+
     console.log('✓ Build sync completed successfully!');
   }
 } catch (err) {

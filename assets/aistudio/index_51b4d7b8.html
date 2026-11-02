@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b28">
+  <meta name="description" content="VÓZ DA FÉ — uma rádio para renovar a esperança, fortalecer a fé e estar com você em todos os momentos.">
+  <title>VÓZ DA FÉ — Rádio Gospel</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172a27;
+      --muted: #69736d;
+      --forest: #102b28;
+      --forest-light: #1a3d37;
+      --cream: #f7f5ef;
+      --paper: #fffefa;
+      --gold: #e6b86b;
+      --line: #e6e5dc;
+      --serif: Georgia, "Times New Roman", serif;
+      --sans: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
+    .wrap { width: min(1160px, calc(100% - 48px)); margin-inline: auto; }
+
+    .hero-shell {
+      overflow: hidden;
+      position: relative;
+      min-height: 710px;
+      color: #fffefa;
+      background:
+        radial-gradient(ellipse at 78% 45%, rgba(80, 123, 86, .31), transparent 35%),
+        radial-gradient(ellipse at 23% 6%, rgba(100, 129, 91, .16), transparent 29%),
+        var(--forest);
+    }
+    .hero-shell::after {
+      position: absolute;
+      content: "";
+      width: 640px;
+      height: 640px;
+      border: 1px solid rgba(230, 184, 107, .12);
+      border-radius: 50%;
+      right: -150px;
+      top: 106px;
+      pointer-events: none;
+    }
+    .header {
+      height: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 2;
+      border-bottom: 1px solid rgba(255, 255, 255, .13);
+    }
+    .brand { display: inline-flex; align-items: center; gap: 11px; }
+    .brand-mark { width: 39px; height: 39px; color: var(--gold); flex: none; }
+    .brand-name { font-size: 15px; font-weight: 800; letter-spacing: .14em; }
+    .brand-name span { color: var(--gold); }
+    .nav { display: flex; align-items: center; gap: 34px; font-size: 13px; color: rgba(255,255,255,.78); }
+    .nav a { transition: color .2s ease; }
+    .nav a:hover { color: var(--gold); }
+    .nav-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      border: 1px solid rgba(230,184,107,.6);
+      border-radius: 99px;
+      padding: 11px 17px;
+      color: #fffefa;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #ef9b76; box-shadow: 0 0 0 4px rgba(239,155,118,.12); }
+    .menu-toggle {
+      display: none;
+      border: 0;
+      background: transparent;
+      color: white;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .hero {
+      min-height: 612px;
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      align-items: center;
+      gap: 40px;
+      position: relative;
+      z-index: 1;
+      padding: 48px 0 78px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--gold);
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 750;
+      letter-spacing: .19em;
+    }
+    .eyebrow::before { content: ""; width: 25px; height: 1px; background: var(--gold); }
+    h1 {
+      max-width: 620px;
+      margin: 22px 0 18px;
+      font-family: var(--serif);
+      font-size: clamp(52px, 6vw, 76px);
+      font-weight: 400;
+      letter-spacing: -.055em;
+      line-height: 1.03;
+    }
+    h1 em { color: var(--gold); font-weight: 400; }
+    .hero-copy {
+      max-width: 440px;
+      color: rgba(255,255,255,.7);
+      font-size: 15px;
+      line-height: 1.8;
+    }
+    .hero-actions { display: flex; align-items: center; gap: 25px; margin-top: 32px; }
+    .button {
+      min-height: 49px;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 11px;
+      padding: 0 21px;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .025em;
+      cursor: pointer;
+      transition: transform .2s ease, background .2s ease;
+    }
+    .button:hover { transform: translateY(-2px); }
+    .button-gold { color: #192c26; background: var(--gold); }
+    .button-gold:hover { background: #f0ca86; }
+    .text-link { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 650; color: rgba(255,255,255,.82); }
+    .text-link:hover { color: var(--gold); }
+    .hero-note { color: rgba(255,255,255,.48); font-size: 11px; margin: 14px 0 0; }
+
+    .radio-scene {
+      min-height: 435px;
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+    .sun {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      top: 30px;
+      right: 45px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 42% 42%, rgba(233,196,133,.25), rgba(233,196,133,.04) 65%, transparent 66%);
+    }
+    .orbit {
+      width: 380px;
+      height: 380px;
+      border: 1px solid rgba(230,184,107,.24);
+      border-radius: 50%;
+      position: absolute;
+      display: grid;
+      place-items: center;
+    }
+    .orbit::before, .orbit::after {
+      content: "";
+      position: absolute;
+      border: 1px solid rgba(230,184,107,.15);
+      border-radius: 50%;
+    }
+    .orbit::before { inset: 23px; }
+    .orbit::after { inset: 49px; }
+    .cross {
+      width: 102px;
+      height: 144px;
+      position: relative;
+      z-index: 1;
+      filter: drop-shadow(0 10px 35px rgba(230,184,107,.2));
+    }
+    .cross::before, .cross::after {
+      content: "";
+      position: absolute;
+      border-radius: 3px;
+      background: linear-gradient(145deg, #f4d497, #bb8d50);
+    }
+    .cross::before { width: 17px; height: 133px; left: 43px; top: 7px; }
+    .cross::after { width: 88px; height: 16px; left: 8px; top: 39px; }
+    .radio-caption {
+      position: absolute;
+      left: -7px;
+      bottom: 13px;
+      padding: 15px 20px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 5px;
+      background: rgba(16,43,40,.82);
+      backdrop-filter: blur(10px);
+    }
+    .radio-caption small { display: block; color: var(--gold); font-size: 9px; letter-spacing: .17em; text-transform: uppercase; }
+    .radio-caption strong { display: block; margin-top: 6px; font-family: var(--serif); font-weight: 400; font-size: 18px; }
+    .signal {
+      position: absolute;
+      right: 8px;
+      top: 46px;
+      width: 79px;
+      height: 79px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: var(--gold);
+    }
+    .signal svg { width: 29px; height: 29px; }
+
+    .ticker { background: #e8dfca; }
+    .ticker-inner {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .ticker-label { display: flex; align-items: center; gap: 13px; }
+    .ticker-icon { width: 33px; height: 33px; border-radius: 50%; display: grid; place-items: center; color: var(--forest); background: rgba(16,43,40,.09); }
+    .ticker-label small { color: #718078; display: block; text-transform: uppercase; letter-spacing: .14em; font-weight: 750; font-size: 9px; }
+    .ticker-label strong { font-family: var(--serif); font-size: 16px; font-weight: 400; display: block; margin-top: 3px; }
+    .ticker-verse { color: #57625a; font-family: var(--serif); font-size: 14px; text-align: right; }
+    .ticker-verse span { color: #899087; font-family: var(--sans); font-size: 10px; margin-left: 10px; }
+
+    .section { padding: 100px 0; }
+    .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 28px; margin-bottom: 42px; }
+    .section-kicker { color: #8c7653; font-size: 10px; font-weight: 750; letter-spacing: .2em; text-transform: uppercase; }
+    h2 { margin: 13px 0 0; font-family: var(--serif); font-size: clamp(37px, 4vw, 49px); font-weight: 400; letter-spacing: -.04em; line-height: 1.1; }
+    .section-intro { max-width: 360px; margin: 0 0 3px; color: var(--muted); font-size: 13px; line-height: 1.8; }
+    .programs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .program-card {
+      min-height: 250px;
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--paper);
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .program-card:hover { transform: translateY(-4px); box-shadow: 0 15px 35px rgba(24,43,37,.07); }
+    .program-top { display: flex; align-items: center; justify-content: space-between; }
+    .program-time { color: #7c806f; font-size: 10px; font-weight: 750; letter-spacing: .11em; }
+    .program-icon { width: 39px; height: 39px; display: grid; place-items: center; color: #8b7550; border-radius: 50%; background: #f2eddf; }
+    .program-icon svg { width: 18px; height: 18px; }
+    .program-card h3 { margin: 28px 0 8px; font-family: var(--serif); font-size: 24px; font-weight: 400; letter-spacing: -.02em; }
+    .program-card p { max-width: 275px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+    .program-host { margin-top: 20px; display: flex; align-items: center; gap: 9px; color: #34483e; font-size: 10px; font-weight: 700; }
+    .host-dot { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: #8b9a7e; font-family: var(--serif); font-size: 11px; }
+
+    .message-section { padding: 0 0 100px; }
+    .message-card {
+      min-height: 290px;
+      padding: 55px 8%;
+      border-radius: 8px;
+      text-align: center;
+      color: #fffefa;
+      background:
+        radial-gradient(ellipse at 50% 130%, rgba(120,151,103,.3), transparent 50%),
+        var(--forest);
+      position: relative;
+      overflow: hidden;
+    }
+    .message-card::before, .message-card::after { content: "“"; position: absolute; color: rgba(230,184,107,.12); font-family: var(--serif); font-size: 210px; line-height: 1; }
+    .message-card::before { left: 7%; top: -5px; }
+    .message-card::after { content: "”"; right: 7%; bottom: -90px; }
+    .message-card .section-kicker { color: var(--gold); }
+    .message-card blockquote { max-width: 700px; margin: 22px auto 17px; font-family: var(--serif); font-size: clamp(24px, 3vw, 35px); font-weight: 400; line-height: 1.35; position: relative; }
+    .message-card cite { color: rgba(255,255,255,.6); font-size: 10px; font-style: normal; letter-spacing: .13em; text-transform: uppercase; }
+
+    .contact-section { padding: 0 0 100px; }
+    .contact-layout { display: grid; grid-template-columns: .8fr 1.2fr; gap: 80px; align-items: start; }
+    .contact-copy { padding-top: 14px; }
+    .contact-copy h2 { max-width: 390px; font-size: clamp(38px, 4vw, 49px); }
+    .contact-copy > p { max-width: 390px; margin: 17px 0 28px; color: var(--muted); font-size: 13px; line-height: 1.8; }
+    .contact-reasons { display: grid; gap: 16px; }
+    .contact-reason { display: flex; align-items: center; gap: 12px; color: #526159; font-size: 11px; }
+    .contact-reason-icon { width: 34px; height: 34px; flex: none; display: grid; place-items: center; color: #8b7550; border-radius: 50%; background: #f0ecdf; }
+    .contact-reason-icon svg { width: 16px; height: 16px; }
+    .contact-form { padding: 30px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); }
+    .contact-form h3 { margin: 0 0 23px; font-family: var(--serif); font-size: 24px; font-weight: 400; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-field { display: grid; gap: 7px; margin-bottom: 17px; }
+    .form-field label { color: #48564e; font-size: 10px; font-weight: 750; letter-spacing: .04em; }
+    .form-field input, .form-field select, .form-field textarea {
+      width: 100%;
+      min-height: 44px;
+      padding: 11px 12px;
+      border: 1px solid #dedfd6;
+      border-radius: 4px;
+      outline: none;
+      color: var(--ink);
+      background: #fff;
+      font: 12px var(--sans);
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .form-field textarea { min-height: 118px; resize: vertical; line-height: 1.6; }
+    .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: #8b9a7e; box-shadow: 0 0 0 3px rgba(139,154,126,.15); }
+    .form-field input::placeholder, .form-field textarea::placeholder { color: #9a9e96; }
+    .contact-form-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .form-note { max-width: 225px; margin: 0; color: #858b82; font-size: 9px; line-height: 1.6; }
+    .button-outline { min-height: 45px; border-color: #bcc4b9; color: var(--ink); background: transparent; }
+    .button-outline:hover { background: #f7f5ef; }
+    .contact-status { min-height: 18px; margin: 13px 0 0; color: #8a583b; font-size: 11px; line-height: 1.6; }
+
+    footer { color: rgba(255,255,255,.67); background: #0c211f; }
+    .footer-main { min-height: 115px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .footer-brand { color: #fffefa; }
+    .footer-note { font-size: 10px; text-align: right; line-height: 1.8; }
+    .footer-bottom { min-height: 49px; border-top: 1px solid rgba(255,255,255,.1); display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 9px; color: rgba(255,255,255,.43); }
+    .social-links { display: flex; gap: 17px; }
+    .social-links a:hover { color: var(--gold); }
+    .notice {
+      position: fixed;
+      z-index: 5;
+      left: 50%;
+      bottom: 25px;
+      width: min(440px, calc(100% - 32px));
+      padding: 14px 18px;
+      transform: translate(-50%, 20px);
+      opacity: 0;
+      pointer-events: none;
+      border: 1px solid rgba(230,184,107,.5);
+      border-radius: 6px;
+      color: #fffefa;
+      background: #163630;
+      box-shadow: 0 12px 35px rgba(0,0,0,.2);
+      text-align: center;
+      font-size: 12px;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .notice.show { opacity: 1; transform: translate(-50%, 0); }
+    .skip-link { position: absolute; left: -9999px; top: 8px; z-index: 10; padding: 10px; color: #102b28; background: #fff; }
+    .skip-link:focus { left: 8px; }
+
+    @media (max-width: 760px) {
+      .wrap { width: min(100% - 36px, 560px); }
+      .hero-shell { min-height: auto; }
+      .header { height: 76px; }
+      .menu-toggle { display: block; }
+      .nav {
+        display: none;
+        position: absolute;
+        top: 66px;
+        right: 0;
+        left: 0;
+        padding: 19px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 17px;
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 6px;
+        background: #163630;
+      }
+      .nav.open { display: flex; }
+      .nav-live { justify-content: center; }
+      .hero { min-height: initial; grid-template-columns: 1fr; gap: 12px; padding: 69px 0 46px; }
+      h1 { font-size: clamp(49px, 12vw, 68px); }
+      .hero-copy { font-size: 14px; }
+      .radio-scene { min-height: 330px; margin-top: 12px; }
+      .orbit { width: 290px; height: 290px; }
+      .orbit::before { inset: 18px; }
+      .orbit::after { inset: 38px; }
+      .sun { width: 240px; height: 240px; top: 15px; right: 25px; }
+      .cross { transform: scale(.8); }
+      .radio-caption { left: 0; bottom: 0; }
+      .signal { right: 0; top: 13px; width: 60px; height: 60px; }
+      .ticker-inner { align-items: flex-start; flex-direction: column; padding: 17px 0; gap: 12px; }
+      .ticker-verse { text-align: left; font-size: 13px; }
+      .ticker-verse span { display: block; margin: 5px 0 0; }
+      .section { padding: 72px 0; }
+      .section-heading { align-items: flex-start; flex-direction: column; gap: 15px; margin-bottom: 28px; }
+      .section-intro { max-width: 470px; }
+      .programs { grid-template-columns: 1fr; gap: 12px; }
+      .program-card { min-height: 220px; }
+      .message-section { padding-bottom: 70px; }
+      .message-card { padding: 46px 24px; }
+      .message-card::before { left: 1%; font-size: 150px; }
+      .message-card::after { right: 1%; font-size: 150px; bottom: -60px; }
+      .contact-section { padding-bottom: 70px; }
+      .contact-layout { grid-template-columns: 1fr; gap: 28px; }
+      .contact-copy { padding-top: 0; }
+      .contact-form { padding: 22px 18px; }
+      .form-row { grid-template-columns: 1fr; gap: 0; }
+      .contact-form-footer { align-items: flex-start; flex-direction: column; }
+      .form-note { max-width: none; }
+      .footer-main { align-items: flex-start; flex-direction: column; justify-content: center; padding: 24px 0; }
+      .footer-note { text-align: left; }
+      .footer-bottom { align-items: flex-start; flex-direction: column; justify-content: center; padding: 14px 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <div class="hero-shell">
+    <header class="header wrap">
+      <a class="brand" href="#inicio" aria-label="VÓZ DA FÉ — início">
+        <svg class="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <path d="M24 15v21M17 22h14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <path d="M12 15a17 17 0 0 0 0 18M36 15a17 17 0 0 1 0 18M7 10a24 24 0 0 0 0 28M41 10a24 24 0 0 1 0 28" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".75"/>
+        </svg>
+        <span class="brand-name">VÓZ <span>DA FÉ</span></span>
+      </a>
+      <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="site-nav">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+      <nav class="nav" id="site-nav" aria-label="Navegação principal">
+        <a href="#programacao">Programação</a>
+        <a href="#mensagem">Palavra do dia</a>
+        <a href="#contato">Contato</a>
+        <a class="nav-live" href="#ao-vivo" data-play><span class="live-dot"></span> Ouça ao vivo</a>
+      </nav>
+    </header>
+
+    <main id="conteudo">
+      <section class="hero wrap" id="inicio" aria-labelledby="hero-title">
+        <div>
+          <span class="eyebrow">Rádio Gospel</span>
+          <h1 id="hero-title">Uma voz que<br>renova a sua <em>fé.</em></h1>
+          <p class="hero-copy">Música, esperança e a Palavra de Deus com você em todos os momentos. Sintonize o que faz bem para a alma.</p>
+          <div class="hero-actions">
+            <a class="button button-gold" href="#ao-vivo" data-play>
+              <svg width="13" height="15" viewBox="0 0 14 16" fill="none" aria-hidden="true"><path d="M13 7.13a1 1 0 0 1 0 1.74L2.5 14.93A1 1 0 0 1 1 14.06V1.94a1 1 0 0 1 1.5-.87L13 7.13Z" fill="currentColor"/></svg>
+              Ouvir a rádio
+            </a>
+            <a class="text-link" href="#programacao">Conheça a programação <span aria-hidden="true">→</span></a>
+          </div>
+          <p class="hero-note">Uma companhia de fé, para onde você for.</p>
+        </div>
+        <div class="radio-scene" aria-hidden="true">
+          <div class="sun"></div>
+          <div class="orbit"><div class="cross"></div></div>
+          <div class="signal">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 9a10 10 0 0 1 14 0M8 12a6 6 0 0 1 8 0m-5 3a2 2 0 0 1 2 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg>
+          </div>
+          <div class="radio-caption"><small>Em cada canção, uma mensagem</small><strong>Fé que toca o coração</strong></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <section class="ticker" aria-label="Versículo do dia">
+    <div class="ticker-inner wrap">
+      <div class="ticker-label">
+        <span class="ticker-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 3v14M5.5 7.5h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M3.5 5.5a9 9 0 0 0 0 9M16.5 5.5a9 9 0 0 1 0 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </span>
+        <span><small>Uma palavra para hoje</small><strong>Respire. Deus está com você.</strong></span>
+      </div>
+      <div class="ticker-verse">“O Senhor é o meu pastor; nada me faltará.” <span>Salmos 23:1</span></div>
+    </div>
+  </section>
+
+  <section class="section wrap" id="programacao" aria-labelledby="program-title">
+    <div class="section-heading">
+      <div><span class="section-kicker">Sempre com você</span><h2 id="program-title">Nossa programação</h2></div>
+      <p class="section-intro">Momentos especiais para começar o dia com propósito, encontrar paz e fortalecer a sua caminhada.</p>
+    </div>
+    <div class="programs">
+      <article class="program-card">
+        <div>
+          <div class="program-top">
+            <span class="program-time">SEG–SEX · 06H ÀS 09H</span>
+            <span class="program-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+          </div>
+          <h3>Manhã de Esperança</h3>
+          <p>Comece o dia com louvores, boas notícias e uma dose de inspiração.</p>
+        </div>
+        <div class="program-host"><span class="host-dot">V</span> Sua companhia logo cedo</div>
+      </article>
+      <article class="program-card">
+        <div>
+          <div class="program-top">
+            <span class="program-time">SEG–SEX · 12H ÀS 14H</span>
+            <span class="program-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s-8-4.35-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6.65-8 11-8 11Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
+          </div>
+          <h3>Louvor &amp; Adoração</h3>
+          <p>Uma pausa na rotina para aquietar o coração e se conectar com Deus.</p>
+        </div>
+        <div class="program-host"><span class="host-dot">V</span> Um encontro com a presença</div>
+      </article>
+      <article class="program-card">
+        <div>
+          <div class="program-top">
+            <span class="program-time">TODOS OS DIAS · 20H</span>
+            <span class="program-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M20.5 15.5A8.5 8.5 0 0 1 8.5 3.5a8.5 8.5 0 1 0 12 12Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
+          </div>
+          <h3>Noite de Paz</h3>
+          <p>Canções tranquilas e palavras de fé para encerrar o dia em paz.</p>
+        </div>
+        <div class="program-host"><span class="host-dot">V</span> Seu momento de descanso</div>
+      </article>
+    </div>
+  </section>
+
+  <section class="message-section wrap" id="mensagem" aria-labelledby="message-title">
+    <div class="message-card">
+      <span class="section-kicker" id="message-title">Guarde no coração</span>
+      <blockquote>“Entregue o seu caminho ao Senhor; confie nele, e ele agirá.”</blockquote>
+      <cite>Salmos 37:5</cite>
+    </div>
+  </section>
+
+  <section class="contact-section wrap" id="contato" aria-labelledby="contact-title">
+    <div class="contact-layout">
+      <div class="contact-copy">
+        <span class="section-kicker">Estamos aqui por você</span>
+        <h2 id="contact-title">Sua mensagem faz diferença.</h2>
+        <p>Tem um pedido de oração, um testemunho ou quer falar com a equipe da rádio? Escreva para nós. Será uma alegria receber sua mensagem.</p>
+        <div class="contact-reasons">
+          <div class="contact-reason">
+            <span class="contact-reason-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s-8-4.35-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6.65-8 11-8 11Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
+            Pedidos de oração e palavras de apoio
+          </div>
+          <div class="contact-reason">
+            <span class="contact-reason-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5v-15Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M8 7h8m-8 3h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+            Testemunhos, sugestões e recados
+          </div>
+        </div>
+      </div>
+      <form class="contact-form" id="contact-form" data-recipient="">
+        <h3>Fale com a gente</h3>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="contact-name">Seu nome</label>
+            <input id="contact-name" name="name" type="text" autocomplete="name" placeholder="Como podemos chamar você?" required>
+          </div>
+          <div class="form-field">
+            <label for="contact-email">Seu e-mail</label>
+            <input id="contact-email" name="email" type="email" autocomplete="email" placeholder="voce@exemplo.com" required>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="contact-subject">Assunto</label>
+          <select id="contact-subject" name="subject" required>
+            <option value="" disabled selected>Escolha um assunto</option>
+            <option>Pedido de oração</option>
+            <option>Testemunho</option>
+            <option>Mensagem para a rádio</option>
+            <option>Sugestão</option>
+            <option>Outro assunto</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="contact-message">Sua mensagem</label>
+          <textarea id="contact-message" name="message" placeholder="Escreva sua mensagem aqui..." required></textarea>
+        </div>
+        <div class="contact-form-footer">
+          <p class="form-note">Com o e-mail da rádio configurado, seu aplicativo de e-mail abrirá com a mensagem pronta para enviar.</p>
+          <button class="button button-outline" type="submit">Preparar mensagem <span aria-hidden="true">→</span></button>
+        </div>
+        <p class="contact-status" id="contact-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+  <footer id="ao-vivo">
+    <div class="footer-main wrap">
+      <a class="brand footer-brand" href="#inicio">
+        <svg class="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 15v21M17 22h14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M12 15a17 17 0 0 0 0 18M36 15a17 17 0 0 1 0 18M7 10a24 24 0 0 0 0 28M41 10a24 24 0 0 1 0 28" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".75"/></svg>
+        <span class="brand-name">VÓZ <span>DA FÉ</span></span>
+      </a>
+      <div class="footer-note">Uma voz de esperança.<br>Uma companhia de fé.</div>
+    </div>
+    <div class="footer-bottom wrap">
+      <span>© <span id="year"></span> VÓZ DA FÉ. Feita com fé e carinho.</span>
+      <div class="social-links"><a href="#contato">Contato</a><a href="#programacao">Programação</a></div>
+    </div>
+  </footer>
+  <div class="notice" id="notice" role="status" aria-live="polite"></div>
+
+  <script>
+    const menuToggle = document.querySelector(".menu-toggle");
+    const nav = document.querySelector("#site-nav");
+    const notice = document.querySelector("#notice");
+    let noticeTimer;
+
+    menuToggle.addEventListener("click", () => {
+      const isOpen = menuToggle.getAttribute("aria-expanded") === "true";
+      menuToggle.setAttribute("aria-expanded", String(!isOpen));
+      menuToggle.setAttribute("aria-label", isOpen ? "Abrir menu" : "Fechar menu");
+      nav.classList.toggle("open", !isOpen);
+    });
+
+    nav.addEventListener("click", (event) => {
+      if (event.target.closest("a")) {
+        nav.classList.remove("open");
+        menuToggle.setAttribute("aria-expanded", "false");
+        menuToggle.setAttribute("aria-label", "Abrir menu");
+      }
+    });
+
+    document.querySelectorAll("[data-play]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        notice.textContent = "A transmissão ao vivo será disponibilizada em breve. Agradecemos por sintonizar!";
+        notice.classList.add("show");
+        window.clearTimeout(noticeTimer);
+        noticeTimer = window.setTimeout(() => notice.classList.remove("show"), 4500);
+      });
+    });
+
+    document.querySelector("#contact-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const status = document.querySelector("#contact-status");
+      const contactEmail = form.dataset.recipient.trim();
+
+      if (!contactEmail) {
+        status.textContent = "O formulário está pronto, mas o e-mail da rádio ainda não foi configurado. Entre em contato com a equipe para ativar o envio.";
+        return;
+      }
+
+      const data = new FormData(form);
+      const subject = `${data.get("subject")} — VÓZ DA FÉ`;
+      const body = `Nome: ${data.get("name")}\nE-mail: ${data.get("email")}\n\n${data.get("message")}`;
+      window.location.href = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    });
+
+    document.querySelector("#year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

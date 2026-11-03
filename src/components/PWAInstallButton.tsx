@@ -134,13 +134,25 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={() => setShowGuide(false)}
-              className="mt-5 w-full rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 text-xs transition-colors shadow-md cursor-pointer"
-            >
-              Entendi
-            </button>
+            <div className="mt-5 flex gap-2">
+              <a
+                href="/manifest.json"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 rounded-xl bg-amber-500/20 border border-amber-500/40 hover:bg-amber-500/30 text-amber-300 font-bold py-2.5 text-xs text-center transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                title="Download do Manifesto PWA oficial"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Link Direto</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => setShowGuide(false)}
+                className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 text-xs transition-colors shadow-md cursor-pointer"
+              >
+                Entendi
+              </button>
+            </div>
           </div>
         </div>
       )}

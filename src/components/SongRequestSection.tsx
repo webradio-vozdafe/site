@@ -50,7 +50,7 @@ export const SongRequestSection: React.FC = () => {
   };
 
   return (
-    <section className="py-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="pedir-hino" className="py-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-20">
       {/* Header */}
       <div className="mb-8">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold mb-2">

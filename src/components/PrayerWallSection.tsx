@@ -231,10 +231,11 @@ export const PrayerWallSection: React.FC = () => {
 
       {/* Prayer Request Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {visibleRequests.map((req) => (
+        {visibleRequests.map((req, index) => (
           <div
             key={req.id}
-            className={`rounded-2xl border p-5 transition-all duration-300 flex flex-col justify-between ${
+            style={{ animationDelay: `${Math.min(index, 8) * 65}ms` }}
+            className={`animate-prayer-card rounded-2xl border p-5 transition-all duration-300 flex flex-col justify-between ${
               req.hasUserPrayed
                 ? 'bg-gradient-to-b from-amber-950/20 via-slate-900 to-slate-950 border-amber-500/40 shadow-lg shadow-amber-500/5'
                 : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
@@ -311,7 +312,7 @@ export const PrayerWallSection: React.FC = () => {
         ))}
 
         {filteredRequests.length === 0 && (
-          <div className="col-span-full py-16 text-center text-slate-400 bg-slate-900/50 rounded-2xl border border-dashed border-slate-800">
+          <div className="animate-prayer-card col-span-full py-16 text-center text-slate-400 bg-slate-900/50 rounded-2xl border border-dashed border-slate-800">
             <HeartHandshake className="w-12 h-12 mx-auto text-amber-400/40 mb-3" />
             <h3 className="font-serif-title text-base font-bold text-slate-300">
               Nenhum pedido encontrado nesta categoria

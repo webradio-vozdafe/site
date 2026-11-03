@@ -66,8 +66,23 @@ button { font: inherit; }
 .brand-name { font-size: 15px; font-weight: 800; letter-spacing: .14em; }
 .brand-name span { color: var(--gold); }
 .nav { display: flex; align-items: center; gap: 34px; font-size: 13px; color: rgba(255,255,255,.78); }
-.nav a, .nav button { transition: color .2s ease; background: transparent; border: 0; cursor: pointer; }
+.nav a, .nav button { transition: color .2s ease; background: transparent; border: 0; cursor: pointer; text-decoration: none; }
 .nav a:hover, .nav button:hover { color: var(--gold); }
+.nav a.active {
+  color: var(--gold) !important;
+  font-weight: 700;
+  position: relative;
+}
+.nav a.active::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 2px;
+}
 .nav-live {
   display: inline-flex;
   align-items: center;
@@ -412,6 +427,22 @@ footer { color: rgba(255,255,255,.67); background: #0c211f; }
 
 .studio-floating-panel {
   animation: studio-slide-fade-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Animação suave fade-in com leve elevação para os cards do Mural de Oração ao carregar novos pedidos */
+@keyframes prayer-card-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-prayer-card {
+  animation: prayer-card-fade-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @media (max-width: 760px) {

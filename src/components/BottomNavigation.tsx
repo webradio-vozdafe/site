@@ -25,7 +25,16 @@ export const BottomNavigation: React.FC = () => {
               e.preventDefault();
               setActiveTab(item.id);
               window.history.pushState(null, '', item.path);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              if (item.id === 'ao-vivo') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              } else {
+                const el = document.getElementById(item.id);
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }
             }}
             className={`flex flex-col items-center gap-1 p-2 text-[10px] font-medium transition-colors ${
               isActive ? 'text-amber-400' : 'text-slate-400'

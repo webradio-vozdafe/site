@@ -827,7 +827,7 @@ export const ControlPanel: React.FC = () => {
                   setIsControlPanelOpen(false);
                   setActiveTab('ao-vivo');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
-                  window.location.hash = '';
+                  window.history.pushState(null, '', '/inicio');
                 }}
                 className="button button-gold cursor-pointer"
                 style={{ minHeight: '38px', padding: '0 16px', fontSize: '11px' }}
@@ -856,7 +856,7 @@ export const ControlPanel: React.FC = () => {
                   setIsControlPanelOpen(false);
                   setActiveTab('ao-vivo');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
-                  window.location.hash = '';
+                  window.history.pushState(null, '', '/inicio');
                 }}
                 className="px-3 py-2 rounded bg-rose-950/70 hover:bg-rose-900 border border-rose-800 text-rose-200 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                 style={{ minHeight: '38px' }}

@@ -591,19 +591,24 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => clearInterval(interval);
   }, [fetchRadioData]);
 
-  // Automatic hash check for studio / control panel
+  // Automatic route check for studio / control panel and clean paths
   useEffect(() => {
-    const checkHash = () => {
+    const checkRoute = () => {
+      const p = window.location.pathname.toLowerCase();
       const h = window.location.hash.toLowerCase();
-      if (h === '#painel' || h === '#admin' || h === '#estudio' || h === '#dashboard') {
+      if (p === '/painel' || p === '/admin' || p === '/estudio' || p === '/dashboard' || h === '#painel' || h === '#admin' || h === '#estudio' || h === '#dashboard') {
         setIsControlPanelOpen(true);
-      } else if (h === '#/login' || h === '#login') {
+      } else if (p === '/login' || h === '#/login' || h === '#login') {
         setActiveTab('login');
       }
     };
-    checkHash();
-    window.addEventListener('hashchange', checkHash);
-    return () => window.removeEventListener('hashchange', checkHash);
+    checkRoute();
+    window.addEventListener('popstate', checkRoute);
+    window.addEventListener('hashchange', checkRoute);
+    return () => {
+      window.removeEventListener('popstate', checkRoute);
+      window.removeEventListener('hashchange', checkRoute);
+    };
   }, []);
 
   // Dynamic Current Track Info

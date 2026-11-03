@@ -14,7 +14,8 @@ import {
   Share2,
   Sliders,
   X,
-  Download
+  Download,
+  Menu
 } from 'lucide-react';
 import { DAILY_VERSES, RADIO_STATION } from './data/radioData';
 import { buildWhatsAppUrl } from './utils/whatsapp';
@@ -30,8 +31,10 @@ import { PrayerWallSection } from './components/PrayerWallSection';
 import { SongRequestSection } from './components/SongRequestSection';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { BottomNavigation } from './components/BottomNavigation';
+import { MobileDrawer } from './components/MobileDrawer';
 
 const MainView: React.FC = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   useEffect(() => {
     document.title = import.meta.env.VITE_APP_TITLE || 'VOZ DA FÉ Web Rádio';
     if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
@@ -97,6 +100,23 @@ const MainView: React.FC = () => {
   // Network Connectivity State & Auto Reconnect
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
+  const scrollToSection = (sectionId: string) => {
+    if (sectionId === 'inicio' || sectionId === 'ao-vivo') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    const element =
+      document.getElementById(sectionId) ||
+      (sectionId === 'devocionais' ? (document.getElementById('devocionais') || document.getElementById('mensagem')) : null) ||
+      (sectionId === 'sobre' ? (document.getElementById('sobre') || document.getElementById('contato')) : null);
+
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   // Clean Path Router & Route Synchronization
   useEffect(() => {
     const handleRouteSync = () => {
@@ -112,7 +132,7 @@ const MainView: React.FC = () => {
           window.history.replaceState(null, '', '/inicio');
         }
       } else if (legacyHash && typeof window !== 'undefined') {
-        // Convert legacy hash /#inicio to clean path /inicio
+        // Convert legacy hash /#inicio to clean path /inicio without hash
         window.history.replaceState(null, '', `/${legacyHash}`);
       }
 
@@ -126,30 +146,30 @@ const MainView: React.FC = () => {
         case 'programacao':
         case 'grade':
           setActiveTab('programacao');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setTimeout(() => scrollToSection('programacao'), 80);
           break;
         case 'oracao':
         case 'mural':
         case 'pedidos':
           setActiveTab('oracao');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setTimeout(() => scrollToSection('oracao'), 80);
           break;
         case 'pedir-hino':
         case 'pedidos-hino':
         case 'musica':
           setActiveTab('pedir-hino');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setTimeout(() => scrollToSection('pedir-hino'), 80);
           break;
         case 'devocionais':
         case 'mensagens':
         case 'palavra':
         case 'mensagem':
           setActiveTab('devocionais');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setTimeout(() => scrollToSection('devocionais'), 80);
           break;
         case 'sobre':
           setActiveTab('sobre');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setTimeout(() => scrollToSection('sobre'), 80);
           break;
         case 'login':
           setActiveTab('login');
@@ -195,10 +215,16 @@ const MainView: React.FC = () => {
 
     if (['inicio', 'ao-vivo'].includes(cleanRoute)) {
       setActiveTab('ao-vivo');
-    } else if (['programacao', 'oracao', 'pedir-hino', 'devocionais', 'sobre', 'login', 'perfil'].includes(cleanRoute)) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (['login', 'perfil'].includes(cleanRoute)) {
       setActiveTab(cleanRoute);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      setActiveTab(cleanRoute);
+      setTimeout(() => {
+        scrollToSection(cleanRoute);
+      }, 50);
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
 
@@ -598,15 +624,63 @@ const MainView: React.FC = () => {
             <span className="brand-name">VÓZ <span>DA FÉ</span></span>
           </a>
 
-          <nav className="nav" id="site-nav" aria-label="Navegação principal">
-            <a href="/inicio" onClick={(e) => handleNavClick(e, '/inicio')}>Início</a>
-            <a href="/programacao" onClick={(e) => handleNavClick(e, '/programacao')}>Programação</a>
-            <a href="/oracao" onClick={(e) => handleNavClick(e, '/oracao')}>Mural de Oração</a>
-            <a href="/pedir-hino" onClick={(e) => handleNavClick(e, '/pedir-hino')}>Pedir Hino</a>
-            <a href="/devocionais" onClick={(e) => handleNavClick(e, '/devocionais')}>Palavra do Dia</a>
-            <a href="/sobre" onClick={(e) => handleNavClick(e, '/sobre')}>Sobre</a>
-            <a href="/login" onClick={(e) => handleNavClick(e, '/login')}>Entrar</a>
-            <a href="/perfil" onClick={(e) => handleNavClick(e, '/perfil')}>Perfil</a>
+          <nav className="nav hidden lg:flex" id="site-nav" aria-label="Navegação principal">
+            <a
+              href="/inicio"
+              className={['inicio', 'ao-vivo'].includes(activeTab) ? 'active' : ''}
+              onClick={(e) => handleNavClick(e, '/inicio')}
+            >
+              Início
+            </a>
+            <a
+              href="/programacao"
+              className={activeTab === 'programacao' ? 'active' : ''}
+              onClick={(e) => handleNavClick(e, '/programacao')}
+            >
+              Programação
+            </a>
+            <a
+              href="/oracao"
+              className={activeTab === 'oracao' ? 'active' : ''}
+              onClick={(e) => handleNavClick(e, '/oracao')}
+            >
+              Mural de Oração
+            </a>
+            <a
+              href="/pedir-hino"
+              className={activeTab === 'pedir-hino' ? 'active' : ''}
+              onClick={(e) => handleNavClick(e, '/pedir-hino')}
+            >
+              Pedir Hino
+            </a>
+            <a
+              href="/devocionais"
+              className={activeTab === 'devocionais' ? 'active' : ''}
+              onClick={(e) => handleNavClick(e, '/devocionais')}
+            >
+              Palavra do Dia
+            </a>
+            <a
+              href="/sobre"
+              className={activeTab === 'sobre' ? 'active' : ''}
+              onClick={(e) => handleNavClick(e, '/sobre')}
+            >
+              Sobre
+            </a>
+            <a
+              href="/login"
+              className={activeTab === 'login' ? 'active' : ''}
+              onClick={(e) => handleNavClick(e, '/login')}
+            >
+              Entrar
+            </a>
+            <a
+              href="/perfil"
+              className={activeTab === 'perfil' ? 'active' : ''}
+              onClick={(e) => handleNavClick(e, '/perfil')}
+            >
+              Perfil
+            </a>
             
             {deferredPrompt && (
               <button
@@ -632,6 +706,16 @@ const MainView: React.FC = () => {
               {isPlaying ? 'Pausar rádio' : 'Ouça ao vivo'}
             </button>
           </nav>
+
+          {/* Mobile Menu Hamburger Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(true)}
+            className="lg:hidden flex items-center justify-center w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-400/40 text-amber-400 hover:bg-amber-500/25 transition-all cursor-pointer shadow-md shadow-amber-500/10 active:scale-95"
+            aria-label="Abrir menu principal"
+          >
+            <Menu className="w-6 h-6 stroke-[2.2]" />
+          </button>
         </header>
 
         <main id="conteudo">
@@ -926,7 +1010,7 @@ const MainView: React.FC = () => {
       <ScheduleSection />
 
       {/* Mensagem / Palavra do Dia Card */}
-      <section className="message-section wrap" id="mensagem" aria-labelledby="message-title">
+      <section className="message-section wrap scroll-mt-20" id="devocionais" aria-labelledby="message-title">
         <div className="message-card">
           <span className="section-kicker" id="message-title">Guarde no coração</span>
           <blockquote>“{currentVerse.text}”</blockquote>
@@ -1013,8 +1097,8 @@ const MainView: React.FC = () => {
       {/* Mural de Oração & Intercessão */}
       <PrayerWallSection />
 
-      {/* Contato Section (mailto: & WhatsApp direct) */}
-      <section className="contact-section wrap" id="contato" aria-labelledby="contact-title">
+      {/* Contato / Sobre Section (mailto: & WhatsApp direct) */}
+      <section className="contact-section wrap scroll-mt-20" id="sobre" aria-labelledby="contact-title">
         <div className="contact-layout">
           <div className="contact-copy">
             <span className="section-kicker">Estamos aqui por você</span>
@@ -1362,6 +1446,9 @@ const MainView: React.FC = () => {
 
       {/* Song Request Section */}
       <SongRequestSection />
+
+      {/* Mobile Menu Drawer matching PWA Mockup */}
+      <MobileDrawer isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} isLoggedIn={isLoggedIn} />
     </>
   );
 };

@@ -72,7 +72,12 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
         type="button"
         onClick={handleInstallClick}
         className={`${baseStyle} ${className}`}
-        style={{ marginBottom: '60px', ...style }}
+        style={{
+          marginBottom: '529px',
+          marginLeft: '0px',
+          marginRight: '50px',
+          ...style
+        }}
         title="Baixar e instalar o aplicativo Rádio Vóz da Fé no celular ou computador"
       >
         {getButtonContent()}

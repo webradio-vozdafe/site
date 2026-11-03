@@ -445,17 +445,16 @@ footer { color: rgba(255,255,255,.67); background: #0c211f; }
   animation: prayer-card-fade-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+@media (max-width: 1023px) {
+  #site-nav {
+    display: none !important;
+  }
+}
+
 @media (max-width: 760px) {
   .wrap { width: min(100% - 36px, 560px); }
   .hero-shell { min-height: auto; }
-  .header { height: 76px; overflow-x: auto; }
-  .nav {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    font-size: 11px;
-    white-space: nowrap;
-  }
+  .header { height: 76px; }
   .nav-live { justify-content: center; }
   .hero { min-height: initial; grid-template-columns: 1fr; gap: 12px; padding: 69px 0 46px; }
   h1 { font-size: clamp(49px, 12vw, 68px); }

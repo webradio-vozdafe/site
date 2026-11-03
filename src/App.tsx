@@ -994,10 +994,11 @@ const MainView: React.FC = () => {
             </span>
             <button
               onClick={() => setActiveVerseIdx((activeVerseIdx + 1) % DAILY_VERSES.length)}
-              className="text-[10px] text-[#8c7653] hover:text-[#102b28] uppercase font-bold tracking-wider underline cursor-pointer ml-2"
+              className="px-3 py-1.5 rounded border border-[rgba(230,184,107,.5)] bg-[rgba(16,43,40,.6)] hover:bg-[rgba(16,43,40,.9)] text-white transition-all cursor-pointer flex items-center gap-1.5 text-xs ml-2"
               title="Próxima palavra bíblica"
             >
-              Mudar
+              <RotateCcw className="w-3.5 h-3.5 text-[var(--gold)]" />
+              <span>Mudar</span>
             </button>
           </div>
         </div>
@@ -1036,9 +1037,10 @@ const MainView: React.FC = () => {
 
             <button
               onClick={() => setActiveVerseIdx((activeVerseIdx + 1) % DAILY_VERSES.length)}
-              className="px-4 py-2 rounded border border-[rgba(255,255,255,.2)] bg-[rgba(16,43,40,.4)] hover:bg-[rgba(16,43,40,.7)] text-slate-300 transition-all cursor-pointer"
+              className="px-4 py-2 rounded border border-[rgba(230,184,107,.5)] bg-[rgba(16,43,40,.6)] hover:bg-[rgba(16,43,40,.9)] text-white transition-all cursor-pointer flex items-center gap-2"
             >
-              Outro versículo →
+              <RotateCcw className="w-3.5 h-3.5 text-[var(--gold)]" />
+              <span>Mudar mensagem</span>
             </button>
           </div>
 

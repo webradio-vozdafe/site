@@ -14,7 +14,6 @@ import {
   Share2,
   Sliders,
   X,
-  Download,
   Menu
 } from 'lucide-react';
 import { DAILY_VERSES, RADIO_STATION } from './data/radioData';
@@ -229,32 +228,7 @@ const MainView: React.FC = () => {
   };
 
 
-  // PWA Install Prompt state
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
-  useEffect(() => {
-    const handleBeforeInstall = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
-  }, []);
-
-  const handleInstallApp = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    try {
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        showNotice('Aplicativo instalado com sucesso!');
-      }
-    } catch {
-      // Ignored
-    }
-    setDeferredPrompt(null);
-  };
 
   const handleOpenStudio = () => {
     if (isLoggedIn) {
@@ -669,20 +643,7 @@ const MainView: React.FC = () => {
               Sobre
             </a>
 
-            
-            {deferredPrompt && (
-              <button
-                type="button"
-                onClick={handleInstallApp}
-                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-amber-500/50 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 text-xs font-semibold cursor-pointer transition-all"
-                title="Instalar aplicativo da rádio no seu dispositivo"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Instalar App</span>
-              </button>
-            )}
-
-            <PWAInstallButton variant="pill" className="hidden sm:inline-flex" />
+            <PWAInstallButton variant="pill" className="hidden lg:inline-flex items-center my-auto mr-2" />
 
             <button
               className="nav-live"

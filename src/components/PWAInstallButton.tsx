@@ -137,10 +137,21 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
             <div className="mt-5 flex gap-2">
               <a
                 href="/manifest.json"
+                onClick={async (e) => {
+                  if (isInstallable) {
+                    e.preventDefault();
+                    const success = await install();
+                    if (success) {
+                      setInstalledSuccess(true);
+                      setShowGuide(false);
+                      setTimeout(() => setInstalledSuccess(false), 4000);
+                    }
+                  }
+                }}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 rounded-xl bg-amber-500/20 border border-amber-500/40 hover:bg-amber-500/30 text-amber-300 font-bold py-2.5 text-xs text-center transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                title="Download do Manifesto PWA oficial"
+                title="Instalar aplicativo PWA diretamente"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Link Direto</span>

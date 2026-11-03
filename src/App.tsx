@@ -32,6 +32,7 @@ import { SongRequestSection } from './components/SongRequestSection';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { BottomNavigation } from './components/BottomNavigation';
 import { MobileDrawer } from './components/MobileDrawer';
+import { PWAInstallButton } from './components/PWAInstallButton';
 
 const MainView: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -667,20 +668,7 @@ const MainView: React.FC = () => {
             >
               Sobre
             </a>
-            <a
-              href="/login"
-              className={activeTab === 'login' ? 'active' : ''}
-              onClick={(e) => handleNavClick(e, '/login')}
-            >
-              Entrar
-            </a>
-            <a
-              href="/perfil"
-              className={activeTab === 'perfil' ? 'active' : ''}
-              onClick={(e) => handleNavClick(e, '/perfil')}
-            >
-              Perfil
-            </a>
+
             
             {deferredPrompt && (
               <button
@@ -693,6 +681,8 @@ const MainView: React.FC = () => {
                 <span>Instalar App</span>
               </button>
             )}
+
+            <PWAInstallButton variant="pill" className="hidden sm:inline-flex" />
 
             <button
               className="nav-live"
@@ -1305,17 +1295,7 @@ const MainView: React.FC = () => {
       )}
 
       {/* Floating PWA Install Button */}
-      {deferredPrompt && (
-        <button
-          type="button"
-          onClick={handleInstallApp}
-          className="studio-floating-panel fixed bottom-6 right-6 z-40 flex items-center gap-2 px-3.5 py-2 rounded-full border border-amber-500/50 bg-[#0c211f]/95 text-amber-300 hover:text-white hover:bg-[#102b28] shadow-xl backdrop-blur-md text-xs font-semibold cursor-pointer transition-all hover:scale-105 active:scale-95"
-          title="Instalar Rádio Vóz da Fé no seu dispositivo"
-        >
-          <Download className="w-3.5 h-3.5 text-[var(--gold)]" />
-          <span>Instalar App</span>
-        </button>
-      )}
+      <PWAInstallButton variant="pill" className="studio-floating-panel fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40" />
 
       {/* Floating Notice Toast */}
       <div className={`notice ${noticeText ? 'show' : ''}`} id="notice" role="status" aria-live="polite">

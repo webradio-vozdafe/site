@@ -15,14 +15,14 @@ export default defineConfig({
         'assets/aistudio/Logotipo_Dourado_Voz_da_F__4a6f8aec.png'
       ],
       manifest: {
-        id: '/inicio',
+        id: './',
         name: 'Rádio Vóz da Fé',
         short_name: 'Vóz da Fé',
         description: 'Transmissão 24 horas da Rádio Vóz da Fé — louvores, mensagens bíblicas e devocionais que edificam.',
         theme_color: '#102b28',
         background_color: '#102b28',
         display: 'standalone',
-        start_url: './inicio',
+        start_url: './',
         scope: './',
         orientation: 'portrait',
         icons: [

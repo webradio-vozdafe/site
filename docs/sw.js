@@ -81,15 +81,15 @@ define(['./workbox-afac4cd2'], (function (workbox) { 'use strict';
     "revision": "402b66900e731ca748771b6fc5e7a068"
   }, {
     "url": "index.html",
-    "revision": "13b2e23d8aaf2e21c6bea50b1a105eb0"
+    "revision": "6c298f120a7e7512ba0b2211b29baf7f"
   }, {
     "url": "404.html",
     "revision": "d60e17824a55358752d42b0e100a5e25"
   }, {
-    "url": "assets/index-CgyGpi7R.js",
+    "url": "assets/index-CIz0mJDU.js",
     "revision": null
   }, {
-    "url": "assets/index-CEKax9Cj.css",
+    "url": "assets/index-B-DY2ZmH.css",
     "revision": null
   }, {
     "url": "assets/Logotipo_Dourado_Voz_da_F__4a6f8aec-oU0tfiOp.png",
@@ -135,7 +135,7 @@ define(['./workbox-afac4cd2'], (function (workbox) { 'use strict';
     "revision": "dea168984ad16e744d6c92ac1c1ba788"
   }, {
     "url": "manifest.webmanifest",
-    "revision": "6fbc4f4431fb83908a5c58c89e76b9bf"
+    "revision": "d10ea9d838f921dd2436a4743dd19803"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html")));

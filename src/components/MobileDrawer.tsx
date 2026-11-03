@@ -78,7 +78,7 @@ export const MobileDrawer: React.FC<{ isOpen: boolean; onClose: () => void; isLo
 
         {/* PWA Install Promo if available */}
         <div className="flex justify-center -mb-1">
-          <PWAInstallButton />
+          <PWAInstallButton variant="card" />
         </div>
 
         {/* Inner Card Container for Menu List */}

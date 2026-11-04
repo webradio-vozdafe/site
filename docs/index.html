@@ -10,16 +10,26 @@
     <meta name="apple-mobile-web-app-title" content="Vóz da Fé" />
     <meta name="description" content="VÓZ DA FÉ — uma rádio para renovar a esperança, fortalecer a fé e estar com você em todos os momentos." />
     <!-- Favicon & Icons -->
-    <link rel="icon" type="image/png" href="./assets/Logotipo_Dourado_Voz_da_F__4a6f8aec-oU0tfiOp.png" />
-    <link rel="shortcut icon" href="./assets/Logotipo_Dourado_Voz_da_F__4a6f8aec-oU0tfiOp.png" />
-    <link rel="apple-touch-icon" href="./assets/Logotipo_Dourado_Voz_da_F__4a6f8aec-oU0tfiOp.png" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/pwa-512x512.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <!-- OpenGraph -->
     <meta property="og:title" content="VÓZ DA FÉ — Rádio Gospel" />
     <meta property="og:description" content="VÓZ DA FÉ — uma rádio para renovar a esperança, fortalecer a fé e estar com você em todos os momentos." />
     <meta property="og:type" content="website" />
-    <link rel="manifest" href="./assets/manifest-C-r1aiN0.json" />
+    <link rel="manifest" href="/manifest.json" />
     <title>VOZ DA FÉ — Uma voz que renova a sua fé.</title>
     <script>
+      // Early capture of PWA beforeinstallprompt event before React mounts
+      window.__pwaInstallPrompt = null;
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        window.__pwaInstallPrompt = e;
+        window.dispatchEvent(new CustomEvent('pwa-prompt-captured'));
+      });
+
       // Single Page App redirect restoration for GitHub Pages clean URLs
       (function(l) {
         if (l.search[1] === '/' ) {
@@ -30,14 +40,65 @@
               l.pathname.slice(0, -1) + decoded + l.hash
           );
         }
-      }(window.location))
+      }(window.location));
+
+      // Suppress benign Vite dev server WebSocket/HMR errors in iframe preview
+      (function() {
+        var origConsoleError = console.error;
+        console.error = function() {
+          var msg = Array.prototype.slice.call(arguments).join(' ');
+          if (msg.includes('WebSocket') || msg.includes('closed without opened')) {
+            return;
+          }
+          origConsoleError.apply(console, arguments);
+        };
+
+        if (typeof window !== 'undefined' && window.WebSocket) {
+          var OrigWebSocket = window.WebSocket;
+          window.WebSocket = function(url, protocols) {
+            var ws = protocols !== undefined ? new OrigWebSocket(url, protocols) : new OrigWebSocket(url);
+            ws.addEventListener('error', function(err) {
+              if (err && err.stopImmediatePropagation) {
+                err.stopImmediatePropagation();
+              }
+            });
+            return ws;
+          };
+          window.WebSocket.prototype = OrigWebSocket.prototype;
+          window.WebSocket.CONNECTING = OrigWebSocket.CONNECTING;
+          window.WebSocket.OPEN = OrigWebSocket.OPEN;
+          window.WebSocket.CLOSING = OrigWebSocket.CLOSING;
+          window.WebSocket.CLOSED = OrigWebSocket.CLOSED;
+        }
+
+        window.addEventListener('error', function(event) {
+          if (event && event.message && (
+            event.message.includes('WebSocket') ||
+            event.message.includes('closed without opened')
+          )) {
+            event.stopImmediatePropagation();
+            event.preventDefault();
+            return true;
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function(event) {
+          if (event && event.reason && (
+            (event.reason.message && (event.reason.message.includes('WebSocket') || event.reason.message.includes('closed without opened'))) ||
+            (typeof event.reason === 'string' && event.reason.includes('WebSocket'))
+          )) {
+            event.stopImmediatePropagation();
+            event.preventDefault();
+          }
+        }, true);
+      })();
     </script>
 
 
 
-    <script type="module" crossorigin src="./assets/index-CIz0mJDU.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-B-DY2ZmH.css">
-  <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
+    <script type="module" crossorigin src="/assets/index-LjS9B0vc.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CJzzTWjP.css">
+  <link rel="manifest" href="/manifest.json"></head>
   <body>
     <div id="root"></div>
   </body>

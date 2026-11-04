@@ -28,7 +28,13 @@ function copyRecursiveSync(src, dest) {
 
 try {
   if (fs.existsSync(distDir)) {
-    // 1. Copy dist/ to docs/ for GitHub Pages /docs folder option
+    // 1. Clean docs/ directory so no stale build files remain
+    if (fs.existsSync(docsDir)) {
+      fs.rmSync(docsDir, { recursive: true, force: true });
+    }
+    fs.mkdirSync(docsDir, { recursive: true });
+
+    // 2. Copy dist/ to docs/ for GitHub Pages /docs folder option
     copyRecursiveSync(distDir, docsDir);
     console.log('✓ Successfully copied dist/ to docs/ for GitHub Pages /docs folder deployment');
 
@@ -57,6 +63,12 @@ try {
         if (!fs.existsSync(rootTarget)) fs.copyFileSync(publicFile, rootTarget);
       }
     });
+
+    const devDistDir = path.resolve(rootDir, 'dev-dist');
+    if (fs.existsSync(devDistDir)) {
+      copyRecursiveSync(distDir, devDistDir);
+      console.log('✓ Successfully updated dev-dist/ directory with latest build assets');
+    }
 
     console.log('✓ Build sync completed successfully with PWA assets!');
   }

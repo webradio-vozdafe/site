@@ -183,12 +183,12 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
   const [currentQuality, setCurrentQuality] = useState<StreamQuality>(() => {
     try {
-      const savedUrl = localStorage.getItem('vozdafe_stream_quality_url');
-      if (savedUrl) {
-        if (savedUrl.endsWith('/SD')) {
+      const savedQuality = localStorage.getItem('vozdafe_audio_quality') || localStorage.getItem('vozdafe_stream_quality_url');
+      if (savedQuality) {
+        if (savedQuality.endsWith('/SD') || savedQuality === '64 kbps' || savedQuality.toLowerCase().includes('economia')) {
           return STREAM_QUALITIES[2];
         }
-        const found = STREAM_QUALITIES.find((q) => q.url === savedUrl);
+        const found = STREAM_QUALITIES.find((q) => q.url === savedQuality || q.label === savedQuality || q.bitrate === savedQuality);
         if (found) return found;
       }
       return STREAM_QUALITIES[0];
@@ -317,6 +317,7 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Sleep Timer
   const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number | null>(null);
   const [sleepTimerRemainingSec, setSleepTimerRemainingSec] = useState<number | null>(null);
+  const sleepTimerTargetTimeRef = useRef<number | null>(null);
 
   // Prayer Requests with Firestore
   const [prayerRequests, setPrayerRequests] = useState<PrayerRequest[]>(INITIAL_PRAYER_REQUESTS);
@@ -730,25 +731,39 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
 
-  // Sleep timer ticker
+  // Sleep timer ticker (precise timestamp-based calculation resistant to background tab throttling)
   useEffect(() => {
-    if (sleepTimerRemainingSec === null) return;
-    if (sleepTimerRemainingSec <= 0) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-      setIsPlaying(false);
-      setSleepTimerMinutes(null);
-      setSleepTimerRemainingSec(null);
-      return;
-    }
+    if (sleepTimerMinutes === null || !sleepTimerTargetTimeRef.current) return;
 
     const timer = setInterval(() => {
-      setSleepTimerRemainingSec(prev => (prev !== null && prev > 0 ? prev - 1 : 0));
+      if (!sleepTimerTargetTimeRef.current) return;
+      const remainingSec = Math.ceil((sleepTimerTargetTimeRef.current - Date.now()) / 1000);
+      if (remainingSec <= 0) {
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
+        setIsPlaying(false);
+        setSleepTimerMinutes(null);
+        setSleepTimerRemainingSec(null);
+        sleepTimerTargetTimeRef.current = null;
+      } else {
+        setSleepTimerRemainingSec(remainingSec);
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [sleepTimerRemainingSec]);
+  }, [sleepTimerMinutes]);
+
+  // Network Connectivity Auto-Recovery
+  useEffect(() => {
+    const handleOnline = () => {
+      if (isPlayingRef.current || audioError) {
+        retryPlayback();
+      }
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [audioError]);
 
   // Volume & Mute handling
   useEffect(() => {
@@ -846,6 +861,13 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setAudioError(null);
     setIsLoading(true);
     const targetUrl = activePodcast ? activePodcast.audioUrl : (effectiveStreamUrl || 'https://server15.srvsh.com.br:8912/');
+    try {
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
+    } catch {
+      // safe fallback
+    }
     audio.volume = isMuted ? 0 : volume;
     audio.src = targetUrl;
     audio.load();
@@ -895,12 +917,20 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setQuality = (quality: StreamQuality) => {
     setCurrentQuality(quality);
     try {
+      localStorage.setItem('vozdafe_audio_quality', quality.bitrate);
       localStorage.setItem('vozdafe_stream_quality_url', quality.url);
     } catch {
       // safe fallback
     }
     if (audioRef.current && !activePodcast) {
       const wasPlaying = isPlaying;
+      try {
+        audioRef.current.pause();
+        audioRef.current.removeAttribute('src');
+        audioRef.current.load();
+      } catch {
+        // safe fallback
+      }
       audioRef.current.src = quality.url;
       audioRef.current.load();
       if (wasPlaying) {
@@ -918,8 +948,10 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setSleepTimer = (minutes: number | null) => {
     setSleepTimerMinutes(minutes);
     if (minutes === null) {
+      sleepTimerTargetTimeRef.current = null;
       setSleepTimerRemainingSec(null);
     } else {
+      sleepTimerTargetTimeRef.current = Date.now() + minutes * 60 * 1000;
       setSleepTimerRemainingSec(minutes * 60);
     }
   };
@@ -959,19 +991,38 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     category: PrayerRequest['category'];
     content: string;
   }) => {
+    const sanitized = {
+      authorName: (data.authorName || 'Ouvinte').trim().slice(0, 100),
+      city: (data.city || 'Brasil').trim().slice(0, 60),
+      state: (data.state || 'BR').trim().slice(0, 2).toUpperCase(),
+      category: data.category,
+      content: (data.content || '').trim().slice(0, 500)
+    };
+
+    const newPrayer: PrayerRequest = {
+      id: `prayer-${Date.now()}`,
+      ...sanitized,
+      createdAt: 'Agora mesmo',
+      prayersCount: 1,
+      hasUserPrayed: true
+    };
+
+    setPrayerRequests(prev => [newPrayer, ...prev]);
+
     try {
       await addDoc(collection(db, 'prayerRequests'), {
-        authorName: data.authorName,
-        city: data.city,
-        state: data.state.toUpperCase(),
-        category: data.category,
-        content: data.content,
+        ...sanitized,
         createdAt: new Date().toISOString(),
         prayersCount: 1,
         hasUserPrayed: true
       });
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'prayerRequests');
+      console.warn("Firestore prayer creation offline fallback:", error);
+      try {
+        handleFirestoreError(error, OperationType.CREATE, 'prayerRequests');
+      } catch {
+        // preserved local optimistic state
+      }
     }
 
     try {
@@ -990,6 +1041,9 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const prayerRef = doc(db, 'prayerRequests', id);
     const prayer = prayerRequests.find(p => p.id === id);
     if (!prayer) return;
+
+    // Optimistic UI update
+    setPrayerRequests(prev => prev.map(p => p.id === id ? { ...p, prayersCount: (p.prayersCount || 0) + 1 } : p));
     
     try {
       const newCount = (prayer.prayersCount || 0) + 1;
@@ -1009,11 +1063,17 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // ignore
       }
     } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `prayerRequests/${id}`);
+      console.warn("Firestore intercession update notice:", error);
+      try {
+        handleFirestoreError(error, OperationType.UPDATE, `prayerRequests/${id}`);
+      } catch {
+        // preserved local optimistic update
+      }
     }
   };
 
   const deletePrayerRequest = async (id: string) => {
+    setPrayerRequests(prev => prev.filter(p => p.id !== id));
     try {
       await deleteDoc(doc(db, 'prayerRequests', id));
     } catch (error) {
@@ -1022,6 +1082,7 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updatePrayerRequest = async (id: string, updates: Partial<PrayerRequest>) => {
+    setPrayerRequests(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
     try {
       const prayerRef = doc(db, 'prayerRequests', id);
       const existing = prayerRequests.find(p => p.id === id);
@@ -1044,14 +1105,32 @@ export const RadioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     dedicationTo: string;
     message?: string;
   }) => {
+    const sanitized = {
+      listenerName: (data.listenerName || 'Ouvinte').trim().slice(0, 100),
+      city: (data.city || 'Brasil').trim().slice(0, 60),
+      songTitle: (data.songTitle || '').trim().slice(0, 100),
+      artist: (data.artist || 'Cantor Gospel').trim().slice(0, 100),
+      dedicationTo: (data.dedicationTo || '').trim().slice(0, 100),
+      message: data.message ? data.message.trim().slice(0, 500) : undefined
+    };
+
+    const newSong: SongRequest = {
+      id: `song-${Date.now()}`,
+      ...sanitized,
+      requestedAt: 'Agora mesmo',
+      status: "na_fila"
+    };
+
+    setSongRequests(prev => [newSong, ...prev]);
+
     try {
       await addDoc(collection(db, 'songRequests'), {
-        ...data,
+        ...sanitized,
         requestedAt: new Date().toISOString(),
         status: "na_fila"
       });
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'songRequests');
+      console.warn("Firestore song request offline fallback:", error);
     }
   };
 

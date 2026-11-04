@@ -50,11 +50,6 @@ export const MiniBottomPlayer: React.FC = () => {
   return (
     <div
       style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 40,
         background: 'rgba(16, 43, 40, 0.96)',
         backdropFilter: 'blur(12px)',
         borderTop: '1px solid rgba(230, 184, 107, 0.3)',
@@ -62,7 +57,7 @@ export const MiniBottomPlayer: React.FC = () => {
         padding: '10px 16px',
         color: '#fffefa'
       }}
-      className="studio-floating-panel"
+      className="fixed bottom-[58px] lg:bottom-0 left-0 right-0 z-40 studio-floating-panel transition-all"
     >
       <div className="wrap flex items-center justify-between gap-4">
         {/* Left: Indicator & Program */}

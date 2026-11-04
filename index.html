@@ -20,6 +20,14 @@
     <link rel="manifest" href="./manifest.json" />
     <title>VOZ DA FÉ — Uma voz que renova a sua fé.</title>
     <script>
+      // Early capture of PWA beforeinstallprompt event before React mounts
+      window.__pwaInstallPrompt = null;
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        window.__pwaInstallPrompt = e;
+        window.dispatchEvent(new CustomEvent('pwa-prompt-captured'));
+      });
+
       // Single Page App redirect restoration for GitHub Pages clean URLs
       (function(l) {
         if (l.search[1] === '/' ) {

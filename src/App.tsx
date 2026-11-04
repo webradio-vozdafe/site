@@ -1191,7 +1191,7 @@ const MainView: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer id="ao-vivo">
+      <footer id="ao-vivo" className="pb-32 lg:pb-16">
         <div className="footer-main wrap">
           <a
             className="brand footer-brand"

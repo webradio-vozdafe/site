@@ -9,6 +9,8 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
+      manifestFilename: 'manifest.json',
       includeAssets: [
         'favicon.ico',
         'apple-touch-icon.png',
@@ -48,7 +50,38 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        navigateFallback: '/index.html',
         runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'app-pages-cache',
+              networkTimeoutSeconds: 3,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 30
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: ({ url }) => url.origin === self.location.origin && !url.pathname.startsWith('/api/'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'app-routes-cache',
+              networkTimeoutSeconds: 3,
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
@@ -89,5 +122,6 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3000,
+    hmr: false,
   },
 });

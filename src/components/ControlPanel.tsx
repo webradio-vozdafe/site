@@ -193,6 +193,22 @@ export const ControlPanel: React.FC = () => {
   // Soundboard active effect state for visual indicator
   const [activeSoundboardEffect, setActiveSoundboardEffect] = useState<string | null>(null);
   const soundboardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Resume AudioContext on any user interaction within the control panel
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume().catch(() => {});
+      }
+    };
+    window.addEventListener('click', handleUserInteraction, { passive: true });
+    window.addEventListener('keydown', handleUserInteraction, { passive: true });
+    return () => {
+      window.removeEventListener('click', handleUserInteraction);
+      window.removeEventListener('keydown', handleUserInteraction);
+    };
+  }, []);
 
   // Soundboard Web Audio synthesis
   const playSoundEffect = (type: 'vinheta' | 'hora' | 'clamor' | 'gloria' | 'alerta') => {
@@ -205,7 +221,13 @@ export const ControlPanel: React.FC = () => {
 
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const ctx = new AudioCtx();
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        audioCtxRef.current = new AudioCtx();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
       const now = ctx.currentTime;
 
       if (type === 'vinheta') {
@@ -226,8 +248,18 @@ export const ControlPanel: React.FC = () => {
         if ('speechSynthesis' in window) {
           const u = new SpeechSynthesisUtterance('Rádio Vóz da Fé, a frequência do céu!');
           u.lang = 'pt-BR';
+          const voices = window.speechSynthesis.getVoices();
+          const ptVoice = voices.find(v => v.lang.startsWith('pt') || v.lang.includes('BR'));
+          if (ptVoice) u.voice = ptVoice;
           u.rate = 1.0;
-          setTimeout(() => window.speechSynthesis.speak(u), 450);
+          setTimeout(() => {
+            try {
+              window.speechSynthesis.cancel();
+              window.speechSynthesis.speak(u);
+            } catch {
+              // fallback
+            }
+          }, 450);
         }
         showToast('Vinheta Oficial disparada no ar!');
       } else if (type === 'hora') {
@@ -256,8 +288,18 @@ export const ControlPanel: React.FC = () => {
           const nowHour = new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
           const u = new SpeechSynthesisUtterance(`Vóz da Fé informa: agora são ${nowHour}.`);
           u.lang = 'pt-BR';
+          const voices = window.speechSynthesis.getVoices();
+          const ptVoice = voices.find(v => v.lang.startsWith('pt') || v.lang.includes('BR'));
+          if (ptVoice) u.voice = ptVoice;
           u.rate = 1.0;
-          setTimeout(() => window.speechSynthesis.speak(u), 1100);
+          setTimeout(() => {
+            try {
+              window.speechSynthesis.cancel();
+              window.speechSynthesis.speak(u);
+            } catch {
+              // fallback
+            }
+          }, 1100);
         }
         showToast('Chamada de Hora Certa executada no ar!');
       } else if (type === 'clamor') {
@@ -642,18 +684,43 @@ export const ControlPanel: React.FC = () => {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const json = JSON.parse(event.target?.result as string);
-        if (json.programs) localStorage.setItem('vozdafe_programs', JSON.stringify(json.programs));
-        if (json.prayers) localStorage.setItem('vozdafe_prayers', JSON.stringify(json.prayers));
-        if (json.songs) localStorage.setItem('vozdafe_songs', JSON.stringify(json.songs));
-        if (json.verses) localStorage.setItem('vozdafe_verses', JSON.stringify(json.verses));
-        if (json.contacts) localStorage.setItem('vozdafe_contacts', JSON.stringify(json.contacts));
-        if (json.podcasts) localStorage.setItem('vozdafe_podcasts', JSON.stringify(json.podcasts));
-        if (json.station) localStorage.setItem('vozdafe_station', JSON.stringify(json.station));
-        showToast('Backup restaurado com sucesso! Recarregando painel...');
+        const text = event.target?.result as string;
+        if (!text || typeof text !== 'string') {
+          showToast('Arquivo de backup vazio.', 'warn');
+          return;
+        }
+        const json = JSON.parse(text);
+        if (!json || typeof json !== 'object' || Array.isArray(json)) {
+          showToast('Arquivo de backup inválido: formato não reconhecido.', 'warn');
+          return;
+        }
+
+        const hasValidKey = Boolean(
+          Array.isArray(json.programs) ||
+          Array.isArray(json.prayers) ||
+          Array.isArray(json.songs) ||
+          Array.isArray(json.verses) ||
+          Array.isArray(json.contacts) ||
+          Array.isArray(json.podcasts) ||
+          (json.station && typeof json.station === 'object')
+        );
+
+        if (!hasValidKey) {
+          showToast('Arquivo de backup não contém dados reconhecidos da Rádio Vóz da Fé.', 'warn');
+          return;
+        }
+
+        if (Array.isArray(json.programs)) localStorage.setItem('vozdafe_programs', JSON.stringify(json.programs));
+        if (Array.isArray(json.prayers)) localStorage.setItem('vozdafe_prayers', JSON.stringify(json.prayers));
+        if (Array.isArray(json.songs)) localStorage.setItem('vozdafe_songs', JSON.stringify(json.songs));
+        if (Array.isArray(json.verses)) localStorage.setItem('vozdafe_verses', JSON.stringify(json.verses));
+        if (Array.isArray(json.contacts)) localStorage.setItem('vozdafe_contacts', JSON.stringify(json.contacts));
+        if (Array.isArray(json.podcasts)) localStorage.setItem('vozdafe_podcasts', JSON.stringify(json.podcasts));
+        if (json.station && typeof json.station === 'object') localStorage.setItem('vozdafe_station', JSON.stringify(json.station));
+        showToast('Backup validado e restaurado com sucesso! Recarregando painel...');
         setTimeout(() => window.location.reload(), 1200);
       } catch {
-        showToast('Erro ao importar backup: arquivo JSON inválido.', 'warn');
+        showToast('Erro ao importar backup: arquivo JSON corrompido ou inválido.', 'warn');
       }
     };
     reader.readAsText(file);

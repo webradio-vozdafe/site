@@ -14,21 +14,59 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((name) => {
+          if (name !== CACHE_NAME) {
+            return caches.delete(name);
+          }
+        })
+      );
+    }).then(() => clients.claim())
+  );
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.url.includes('/api/')) {
+  if (event.request.url.includes('/api/') || event.request.url.includes('audio') || event.request.url.includes('stream')) {
     return;
   }
+
+  // NetworkFirst strategy for navigation routes and HTML pages
+  if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request).then((cachedResponse) => {
+            return cachedResponse || caches.match('/') || caches.match('/index.html');
+          });
+        })
+    );
+    return;
+  }
+
+  // NetworkFirst fallback for application resources, falling back to cache
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    }).catch(() => {
-      if (event.request.mode === 'navigate') {
-        return caches.match('/');
-      }
-    })
+    fetch(event.request)
+      .then((response) => {
+        if (response && response.status === 200 && response.type === 'basic') {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
 

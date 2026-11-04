@@ -3,6 +3,7 @@ import { Radio, Heart, MessageCircle, Phone, Mail, Sparkles } from 'lucide-react
 import { RADIO_STATION } from '../data/radioData';
 import { useRadio } from '../context/RadioContext';
 import { buildWhatsAppUrl } from '../utils/whatsapp';
+import { PWAInstallButton } from './PWAInstallButton';
 
 export const Footer: React.FC = () => {
   const { setActiveTab, stationSettings } = useRadio();
@@ -180,12 +181,15 @@ export const Footer: React.FC = () => {
 
         </div>
 
-        {/* Bottom copyright */}
+        {/* Bottom copyright and PWA Install */}
         <div className="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-[11px]">
           <p>© {new Date().getFullYear()} Rádio Vóz da Fé (VOZDAFE). Todos os direitos reservados.</p>
-          <p className="flex items-center gap-1">
-            Feito com <Heart className="w-3 h-3 text-red-500 fill-current inline" /> para abençoar vidas
-          </p>
+          <div className="flex items-center gap-3">
+            <PWAInstallButton variant="pill" />
+            <p className="flex items-center gap-1">
+              Feito com <Heart className="w-3 h-3 text-red-500 fill-current inline" /> para abençoar vidas
+            </p>
+          </div>
         </div>
       </div>
     </footer>

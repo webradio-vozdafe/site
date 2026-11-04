@@ -27,12 +27,20 @@ export function usePWAInstall() {
     setIsIframe(inIframe);
 
     // 2. Detect standalone (already installed)
+    const mediaQuery = typeof window !== 'undefined' ? window.matchMedia('(display-mode: standalone)') : null;
     const isStandalone =
       typeof window !== 'undefined' &&
-      (window.matchMedia('(display-mode: standalone)').matches ||
+      (mediaQuery?.matches ||
         window.matchMedia('(display-mode: window-controls-overlay)').matches ||
         (window.navigator as unknown as { standalone?: boolean }).standalone === true);
-    setIsInstalled(isStandalone);
+    setIsInstalled(!!isStandalone);
+
+    const handleMediaChange = (e: MediaQueryListEvent) => {
+      if (e.matches) setIsInstalled(true);
+    };
+    if (mediaQuery?.addEventListener) {
+      mediaQuery.addEventListener('change', handleMediaChange);
+    }
 
     // 3. User agent detection
     const ua = typeof window !== 'undefined' ? (window.navigator.userAgent || '').toLowerCase() : '';

@@ -9,7 +9,8 @@ import {
   Monitor,
   Copy,
   Sparkles,
-  Info
+  Info,
+  ExternalLink
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 
@@ -28,7 +29,6 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
 }) => {
   const {
     isInstalled,
-    isInstallable,
     isIOS,
     isAndroid,
     isInAppBrowser,
@@ -51,15 +51,13 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
       e.stopPropagation();
     }
 
-    // If native prompt is captured, trigger it immediately
-    if (isInstallable) {
-      const success = await install();
-      if (success) {
-        setInstalledSuccess(true);
-        setShowGuide(false);
-        setTimeout(() => setInstalledSuccess(false), 5000);
-        return;
-      }
+    // Always attempt native browser prompt first
+    const success = await install();
+    if (success) {
+      setInstalledSuccess(true);
+      setShowGuide(false);
+      setTimeout(() => setInstalledSuccess(false), 5000);
+      return;
     }
 
     // Set initial guide tab based on device detection
@@ -72,6 +70,12 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
     }
 
     setShowGuide(true);
+  };
+
+  const openInNewTabForNativePrompt = () => {
+    if (typeof window !== 'undefined') {
+      window.open(window.location.origin, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const handleCopyLink = (e: React.MouseEvent) => {
@@ -124,7 +128,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
         onClick={handleInstallClick}
         className={`${baseStyle} ${className}`}
         style={style}
-        title="Instalar aplicativo Rádio Vóz da Fé no celular, tablet ou computador"
+        title="Instalar aplicativo Rádio Vóz da Fé com botão nativo do navegador"
         aria-label="Instalar aplicativo Rádio Vóz da Fé"
       >
         {getButtonContent()}
@@ -162,17 +166,17 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
                   Instalar Rádio Vóz da Fé
                 </h3>
                 <p className="text-xs text-amber-300/80">
-                  Ouça com 1 toque na tela inicial, mesmo offline!
+                  Instalação nativa direta no seu dispositivo
                 </p>
               </div>
             </div>
 
-            {/* In-App Browser Warning Alert (WhatsApp / Instagram / Facebook) */}
+            {/* In-App Browser / Iframe Warning Alert */}
             {isInAppBrowser && (
               <div className="mb-4 p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2.5">
                 <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
-                  Você está navegando pelo aplicativo de redes sociais (WhatsApp/Instagram). Para conseguir fixar o ícone na tela inicial, toque nos <strong>3 pontinhos (⋮)</strong> no canto da tela e selecione <strong>"Abrir no Chrome"</strong> ou <strong>"Abrir no Safari"</strong>.
+                  Você está navegando dentro do aplicativo de redes sociais (WhatsApp/Instagram). Para ativar a instalação nativa do navegador, toque nos <strong>3 pontinhos (⋮)</strong> e selecione <strong>"Abrir no Chrome"</strong> ou <strong>"Abrir no Safari"</strong>.
                 </p>
               </div>
             )}
@@ -220,59 +224,33 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
             {/* Content for Android */}
             {resolvedTab === 'android' && (
               <div className="space-y-3 text-xs text-slate-200 bg-[#051A16] p-4 rounded-2xl border border-amber-500/20 leading-relaxed">
-                {isInstallable ? (
-                  <div className="space-y-2">
-                    <p className="text-amber-300 font-semibold flex items-center gap-1.5">
-                      <Sparkles className="w-4 h-4 text-amber-400" />
-                      Pronto para instalação rápida!
-                    </p>
-                    <p>
-                      Seu dispositivo Android já reconheceu o aplicativo da Rádio Vóz da Fé. Clique no botão abaixo para concluir:
-                    </p>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const success = await install();
-                        if (success) {
-                          setInstalledSuccess(true);
-                          setShowGuide(false);
-                          setTimeout(() => setInstalledSuccess(false), 5000);
-                        }
-                      }}
-                      className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer active:scale-95 transition-all"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>Confirmar Instalação no Android</span>
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-start gap-2.5">
-                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-[11px] flex-shrink-0">
-                        1
-                      </span>
-                      <p>
-                        No <strong>Google Chrome</strong> ou <strong>Samsung Internet</strong>, toque no menu de <strong>3 pontinhos (⋮)</strong> no canto superior ou inferior.
-                      </p>
-                    </div>
-                    <div className="flex items-start gap-2.5">
-                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-[11px] flex-shrink-0">
-                        2
-                      </span>
-                      <p>
-                        Selecione <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong>.
-                      </p>
-                    </div>
-                    <div className="flex items-start gap-2.5">
-                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-[11px] flex-shrink-0">
-                        3
-                      </span>
-                      <p>
-                        Confirme em <strong>"Instalar"</strong>. O ícone da Rádio Vóz da Fé ficará disponível direto na sua tela inicial!
-                      </p>
-                    </div>
-                  </>
-                )}
+                <div className="space-y-2">
+                  <p className="text-amber-300 font-semibold flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    Instalação Nativa no Android
+                  </p>
+                  <p>
+                    Clique no botão nativo abaixo para abrir o pop-up de instalação do seu navegador Android (Google Chrome ou Samsung Internet):
+                  </p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const success = await install();
+                      if (success) {
+                        setInstalledSuccess(true);
+                        setShowGuide(false);
+                        setTimeout(() => setInstalledSuccess(false), 5000);
+                      } else {
+                        openInNewTabForNativePrompt();
+                      }
+                    }}
+                    className="w-full mt-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer active:scale-95 transition-all"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Instalar pelo Botão Nativo do Navegador</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-900" />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -284,7 +262,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
                     1
                   </span>
                   <p>
-                    Abra o site no <strong>Safari</strong> do iPhone ou iPad.
+                    Abra o site no <strong>Safari</strong> no seu iPhone ou iPad.
                   </p>
                 </div>
                 <div className="flex items-start gap-2.5">
@@ -292,7 +270,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
                     2
                   </span>
                   <p>
-                    Toque no botão de <strong>Compartilhar</strong> <Share2 className="w-3.5 h-3.5 inline text-amber-400 mx-0.5" /> (ícone de quadrado com seta para cima na barra inferior).
+                    Toque no botão nativo de <strong>Compartilhar</strong> <Share2 className="w-3.5 h-3.5 inline text-amber-400 mx-0.5" /> do Safari.
                   </p>
                 </div>
                 <div className="flex items-start gap-2.5">
@@ -300,15 +278,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
                     3
                   </span>
                   <p>
-                    Role as opções e toque em <PlusSquare className="w-3.5 h-3.5 inline text-amber-400 mx-0.5" /> <strong>"Adicionar à Tela de Início"</strong>.
-                  </p>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-[11px] flex-shrink-0">
-                    4
-                  </span>
-                  <p>
-                    Toque em <strong>"Adicionar"</strong> no canto superior direito para concluir. Pronto!
+                    Selecione <PlusSquare className="w-3.5 h-3.5 inline text-amber-400 mx-0.5" /> <strong>"Adicionar à Tela de Início"</strong>.
                   </p>
                 </div>
               </div>
@@ -317,56 +287,33 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
             {/* Content for Desktop */}
             {resolvedTab === 'desktop' && (
               <div className="space-y-3 text-xs text-slate-200 bg-[#051A16] p-4 rounded-2xl border border-amber-500/20 leading-relaxed">
-                {isInstallable ? (
-                  <div className="space-y-2">
-                    <p className="text-amber-300 font-semibold flex items-center gap-1.5">
-                      <Sparkles className="w-4 h-4 text-amber-400" />
-                      Pronto para instalar no seu computador!
-                    </p>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const success = await install();
-                        if (success) {
-                          setInstalledSuccess(true);
-                          setShowGuide(false);
-                          setTimeout(() => setInstalledSuccess(false), 5000);
-                        }
-                      }}
-                      className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer active:scale-95 transition-all"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>Instalar Rádio Vóz da Fé Agora</span>
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-start gap-2.5">
-                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-[11px] flex-shrink-0">
-                        1
-                      </span>
-                      <p>
-                        No <strong>Google Chrome</strong> ou <strong>Microsoft Edge</strong>, olhe para o lado direito da barra de endereço onde fica o link.
-                      </p>
-                    </div>
-                    <div className="flex items-start gap-2.5">
-                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-[11px] flex-shrink-0">
-                        2
-                      </span>
-                      <p>
-                        Clique no ícone de <strong>instalação de aplicativo</strong> (computador com seta para baixo ou símbolo de <strong>+</strong>).
-                      </p>
-                    </div>
-                    <div className="flex items-start gap-2.5">
-                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-[11px] flex-shrink-0">
-                        3
-                      </span>
-                      <p>
-                        Ou acesse o menu <strong>(⋮) &gt; "Salvar e compartilhar" &gt; "Instalar Rádio Vóz da Fé"</strong>.
-                      </p>
-                    </div>
-                  </>
-                )}
+                <div className="space-y-2">
+                  <p className="text-amber-300 font-semibold flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    Instalação Nativa no Computador
+                  </p>
+                  <p>
+                    Clique no botão nativo abaixo para acionar a janela oficial do Google Chrome / Edge:
+                  </p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const success = await install();
+                      if (success) {
+                        setInstalledSuccess(true);
+                        setShowGuide(false);
+                        setTimeout(() => setInstalledSuccess(false), 5000);
+                      } else {
+                        openInNewTabForNativePrompt();
+                      }
+                    }}
+                    className="w-full mt-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer active:scale-95 transition-all"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Instalar pelo Botão Nativo do Navegador</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-900" />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -396,7 +343,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
                 onClick={() => setShowGuide(false)}
                 className="rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 font-bold px-5 py-2.5 text-xs transition-colors cursor-pointer"
               >
-                Entendi
+                Fechar
               </button>
             </div>
           </div>

@@ -1,7 +1,13 @@
-const CACHE_NAME = 'vozdafe-v1';
+const CACHE_NAME = 'vozdafe-v2';
 const urlsToCache = [
   '/',
-  '/index.html'
+  '/index.html',
+  '/manifest.json',
+  '/pwa-192x192.png',
+  '/pwa-512x512.png',
+  '/pwa-maskable-512x512.png',
+  '/apple-touch-icon.png',
+  '/favicon.ico'
 ];
 
 self.addEventListener('install', (event) => {

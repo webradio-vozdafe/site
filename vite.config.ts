@@ -13,35 +13,38 @@ export default defineConfig({
       manifestFilename: 'manifest.json',
       includeAssets: [
         'favicon.ico',
+        'favicon.png',
         'apple-touch-icon.png',
-        'assets/aistudio/Logotipo_Dourado_Voz_da_F__4a6f8aec.png'
+        'pwa-192x192.png',
+        'pwa-512x512.png',
+        'pwa-maskable-512x512.png'
       ],
       manifest: {
-        id: './',
+        id: '/',
         name: 'Rádio Vóz da Fé',
         short_name: 'Vóz da Fé',
         description: 'Transmissão 24 horas da Rádio Vóz da Fé — louvores, mensagens bíblicas e devocionais que edificam.',
         theme_color: '#102b28',
         background_color: '#102b28',
         display: 'standalone',
-        start_url: './',
-        scope: './',
+        start_url: '/',
+        scope: '/',
         orientation: 'portrait',
         icons: [
           {
-            src: './assets/aistudio/Logotipo_Dourado_Voz_da_F__4a6f8aec.png',
+            src: '/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: './assets/aistudio/Logotipo_Dourado_Voz_da_F__4a6f8aec.png',
+            src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: './assets/aistudio/Logotipo_Dourado_Voz_da_F__4a6f8aec.png',
+            src: '/pwa-maskable-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
@@ -51,6 +54,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === 'navigate',
@@ -118,7 +122,7 @@ export default defineConfig({
       }
     })
   ],
-  base: './',
+  base: '/',
   server: {
     host: '0.0.0.0',
     port: 3000,

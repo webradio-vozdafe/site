@@ -32,16 +32,33 @@ try {
     copyRecursiveSync(distDir, docsDir);
     console.log('✓ Successfully copied dist/ to docs/ for GitHub Pages /docs folder deployment');
 
-    // 2. Copy 404.html, .nojekyll, manifest.json to root if missing (without touching root index.html)
-    ['404.html', '.nojekyll'].forEach((file) => {
-      const srcFile = path.join(distDir, file);
-      const destFile = path.join(rootDir, file);
-      if (fs.existsSync(srcFile) && !fs.existsSync(destFile)) {
-        fs.copyFileSync(srcFile, destFile);
+    // 2. Ensure PWA files exist in dist and docs
+    const pwaFiles = [
+      '404.html',
+      '.nojekyll',
+      'manifest.json',
+      'pwa-192x192.png',
+      'pwa-512x512.png',
+      'pwa-maskable-512x512.png',
+      'apple-touch-icon.png',
+      'favicon.ico',
+      'favicon.png'
+    ];
+
+    pwaFiles.forEach((file) => {
+      const publicFile = path.join(rootDir, 'public', file);
+      const distFile = path.join(distDir, file);
+      const docsFile = path.join(docsDir, file);
+      const rootTarget = path.join(rootDir, file);
+
+      if (fs.existsSync(publicFile)) {
+        if (!fs.existsSync(distFile)) fs.copyFileSync(publicFile, distFile);
+        if (!fs.existsSync(docsFile)) fs.copyFileSync(publicFile, docsFile);
+        if (!fs.existsSync(rootTarget)) fs.copyFileSync(publicFile, rootTarget);
       }
     });
 
-    console.log('✓ Build sync completed successfully!');
+    console.log('✓ Build sync completed successfully with PWA assets!');
   }
 } catch (err) {
   console.error('Error copying build output:', err);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -17,14 +17,16 @@ export function usePWAInstall() {
   );
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
   const [isIframe, setIsIframe] = useState(false);
 
   useEffect(() => {
-    // Detect if running inside iframe (AI Studio preview container)
+    // 1. Detect iframe
     const inIframe = typeof window !== 'undefined' && window.self !== window.top;
     setIsIframe(inIframe);
 
-    // Detect standalone mode (already installed on device)
+    // 2. Detect standalone (already installed)
     const isStandalone =
       typeof window !== 'undefined' &&
       (window.matchMedia('(display-mode: standalone)').matches ||
@@ -32,18 +34,24 @@ export function usePWAInstall() {
         (window.navigator as unknown as { standalone?: boolean }).standalone === true);
     setIsInstalled(isStandalone);
 
-    // Detect iOS devices
-    const userAgent = typeof window !== 'undefined' ? window.navigator.userAgent.toLowerCase() : '';
-    const isIOSDevice = /iphone|ipad|ipod/.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    // 3. User agent detection
+    const ua = typeof window !== 'undefined' ? (window.navigator.userAgent || '').toLowerCase() : '';
+    const isIOSDevice =
+      /iphone|ipad|ipod/.test(ua) ||
+      (typeof navigator !== 'undefined' && navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     setIsIOS(isIOSDevice);
 
-    const updatePromptState = () => {
-      if (window.__pwaInstallPrompt) {
-        setDeferredPrompt(window.__pwaInstallPrompt);
-      }
-    };
+    const isAndroidDevice = /android/.test(ua);
+    setIsAndroid(isAndroidDevice);
 
-    updatePromptState();
+    // 4. In-App WebViews (WhatsApp, Instagram, Facebook, Messenger, TikTok)
+    const inApp = /(instagram|fbav|fbios|fban|messenger|whatsapp|bytedance|line|twitter|snapchat)/i.test(ua);
+    setIsInAppBrowser(inApp);
+
+    // 5. Update prompt state if already captured
+    if (window.__pwaInstallPrompt) {
+      setDeferredPrompt(window.__pwaInstallPrompt);
+    }
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
@@ -58,19 +66,25 @@ export function usePWAInstall() {
       setDeferredPrompt(null);
     };
 
+    const handlePromptCaptured = () => {
+      if (window.__pwaInstallPrompt) {
+        setDeferredPrompt(window.__pwaInstallPrompt);
+      }
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
-    window.addEventListener('pwa-prompt-captured', updatePromptState);
+    window.addEventListener('pwa-prompt-captured', handlePromptCaptured);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
-      window.removeEventListener('pwa-prompt-captured', updatePromptState);
+      window.removeEventListener('pwa-prompt-captured', handlePromptCaptured);
     };
   }, []);
 
-  const install = async (): Promise<boolean> => {
-    const promptToUse = deferredPrompt || window.__pwaInstallPrompt;
+  const install = useCallback(async (): Promise<boolean> => {
+    const promptToUse = deferredPrompt || (typeof window !== 'undefined' ? window.__pwaInstallPrompt : null);
     if (!promptToUse) {
       return false;
     }
@@ -87,20 +101,16 @@ export function usePWAInstall() {
       console.warn('PWA install prompt error:', err);
     }
     return false;
-  };
-
-  const openDirectLink = () => {
-    if (typeof window !== 'undefined') {
-      window.open(window.location.href, '_blank', 'noopener,noreferrer');
-    }
-  };
+  }, [deferredPrompt]);
 
   return {
-    isInstallable: !!(deferredPrompt || window.__pwaInstallPrompt),
+    isInstallable: !!(deferredPrompt || (typeof window !== 'undefined' && window.__pwaInstallPrompt)),
     isInstalled,
     isIOS,
+    isAndroid,
+    isInAppBrowser,
     isIframe,
     install,
-    openDirectLink,
+    deferredPrompt,
   };
 }

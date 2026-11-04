@@ -13,6 +13,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 // Register PWA Service Worker for offline support & automatic updates
 const updateSW = registerSW({
+  immediate: true,
   onNeedRefresh() {
     updateSW(true);
   },
@@ -20,10 +21,4 @@ const updateSW = registerSW({
     console.log('Rádio Vóz da Fé está pronta para uso offline!');
   },
 });
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  });
-}
 

@@ -93,7 +93,8 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        globPatterns: ['**/*.{js,css,ico,png,svg,woff,woff2}'],
+        globIgnores: ['**/index.html', 'index.html'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
@@ -159,7 +160,8 @@ export default defineConfig({
       },
       devOptions: {
         enabled: true,
-        type: 'module'
+        type: 'module',
+        suppressWarnings: true
       }
     })
   ],

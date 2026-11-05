@@ -46,15 +46,25 @@
       (function() {
         var origConsoleError = console.error;
         console.error = function() {
-          var msg = '';
-          try {
-            msg = Array.prototype.map.call(arguments, function(a) {
-              return (a && (a.stack || a.message)) ? (a.message + ' ' + (a.stack || '')) : String(a);
-            }).join(' ');
-          } catch(e) {
-            msg = '';
+          var fullText = '';
+          for (var i = 0; i < arguments.length; i++) {
+            var arg = arguments[i];
+            if (typeof arg === 'string') {
+              fullText += ' ' + arg;
+            } else if (arg && typeof arg === 'object') {
+              fullText += ' ' + (arg.message || '') + ' ' + (arg.stack || '') + ' ' + String(arg);
+            } else {
+              fullText += ' ' + String(arg);
+            }
           }
-          if (msg.includes('WebSocket') || msg.includes('closed without opened') || msg.includes('vite:ws') || msg.includes('vite-hmr')) {
+
+          if (
+            fullText.includes('WebSocket') ||
+            fullText.includes('websocket') ||
+            fullText.includes('closed without opened') ||
+            fullText.includes('vite:ws') ||
+            fullText.includes('vite-hmr')
+          ) {
             return;
           }
           origConsoleError.apply(console, arguments);
@@ -84,6 +94,7 @@
           var text = (event && (event.message || (event.error && (event.error.message || event.error.stack)))) || '';
           if (typeof text === 'string' && (
             text.includes('WebSocket') ||
+            text.includes('websocket') ||
             text.includes('closed without opened') ||
             text.includes('vite')
           )) {
@@ -101,7 +112,12 @@
             }
           } catch(e) {}
 
-          if (reasonText.includes('WebSocket') || reasonText.includes('closed without opened') || reasonText.includes('vite')) {
+          if (
+            reasonText.includes('WebSocket') ||
+            reasonText.includes('websocket') ||
+            reasonText.includes('closed without opened') ||
+            reasonText.includes('vite')
+          ) {
             if (event.stopImmediatePropagation) event.stopImmediatePropagation();
             if (event.preventDefault) event.preventDefault();
             return true;

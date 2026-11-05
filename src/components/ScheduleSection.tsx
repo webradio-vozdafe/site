@@ -7,7 +7,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export const ScheduleSection: React.FC = () => {
-  const { currentShow } = useRadio();
+  const { currentShow, programs } = useRadio();
   const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay());
 
   // Persistent reminders initialized from localStorage
@@ -60,8 +60,10 @@ export const ScheduleSection: React.FC = () => {
     { id: 6, label: 'Sáb', full: 'Sábado' },
   ];
 
-  const filteredPrograms = SCHEDULE_PROGRAMS.filter(prog => 
-    selectedDay === -1 || prog.days.includes(selectedDay)
+  const activePrograms = (programs && programs.length > 0) ? programs : SCHEDULE_PROGRAMS;
+
+  const filteredPrograms = activePrograms.filter(prog => 
+    selectedDay === -1 || (prog.days && prog.days.includes(selectedDay))
   );
 
   const toggleReminder = (id: string, title: string) => {

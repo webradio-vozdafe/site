@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RadioProvider, useRadio } from './context/RadioContext';
-import { auth } from './lib/firebase';
+import { auth, db } from './lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import {
   Volume2,
   VolumeX,
@@ -93,8 +94,27 @@ const MainView: React.FC = () => {
   ];
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
-    return auth.onAuthStateChanged((user) => setIsLoggedIn(!!user));
+    return auth.onAuthStateChanged(async (user) => {
+      setIsLoggedIn(!!user);
+      if (user) {
+        const isAdminEmail = user.email === 'vibraefm@gmail.com' || user.email === 'webradiovozdafe@gmail.com';
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists() && userDoc.data().role === 'admin') {
+            setIsAdmin(true);
+          } else {
+            setIsAdmin(isAdminEmail);
+          }
+        } catch {
+          setIsAdmin(isAdminEmail);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+    });
   }, []);
 
   // Network Connectivity State & Auto Reconnect
@@ -183,7 +203,13 @@ const MainView: React.FC = () => {
         case 'estudio':
         case 'painel':
         case 'admin':
-          if (isLoggedIn) setIsControlPanelOpen(true);
+          if (isLoggedIn && isAdmin) {
+            setIsControlPanelOpen(true);
+          } else if (isLoggedIn) {
+            setActiveTab('perfil');
+          } else {
+            setActiveTab('login');
+          }
           break;
         default:
           setActiveTab('ao-vivo');
@@ -202,7 +228,7 @@ const MainView: React.FC = () => {
       window.removeEventListener('popstate', handleRouteSync);
       window.removeEventListener('hashchange', handleRouteSync);
     };
-  }, [isLoggedIn, setActiveTab, setIsControlPanelOpen]);
+  }, [isLoggedIn, isAdmin, setActiveTab, setIsControlPanelOpen]);
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, targetRoute: string) => {
     e.preventDefault();
@@ -227,12 +253,11 @@ const MainView: React.FC = () => {
     }
   };
 
-
-
-
   const handleOpenStudio = () => {
-    if (isLoggedIn) {
+    if (isLoggedIn && isAdmin) {
       setIsControlPanelOpen(true);
+    } else if (isLoggedIn) {
+      setActiveTab('perfil');
     } else {
       setActiveTab('login');
     }
@@ -281,10 +306,7 @@ const MainView: React.FC = () => {
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      showNotice('Conexão restabelecida! Sintonizando...');
-      if (isPlaying || audioError) {
-        retryPlayback();
-      }
+      showNotice('Conexão restabelecida!');
     };
     const handleOffline = () => {
       setIsOnline(false);
@@ -297,7 +319,7 @@ const MainView: React.FC = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [isPlaying, audioError, retryPlayback]);
+  }, []);
 
   // If control panel is open, render ControlPanel view
   if (isControlPanelOpen) {
@@ -944,7 +966,7 @@ const MainView: React.FC = () => {
               “{currentVerse.text}” <span>{currentVerse.reference}</span>
             </span>
             <button
-              onClick={() => setActiveVerseIdx((activeVerseIdx + 1) % DAILY_VERSES.length)}
+              onClick={() => setActiveVerseIdx((activeVerseIdx + 1) % verses.length)}
               className="px-3 py-1.5 rounded border border-[rgba(230,184,107,.5)] bg-[rgba(16,43,40,.6)] hover:bg-[rgba(16,43,40,.9)] text-white transition-all cursor-pointer flex items-center gap-1.5 text-xs ml-2"
               title="Próxima palavra bíblica"
             >
@@ -987,7 +1009,7 @@ const MainView: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setActiveVerseIdx((activeVerseIdx + 1) % DAILY_VERSES.length)}
+              onClick={() => setActiveVerseIdx((activeVerseIdx + 1) % verses.length)}
               className="px-4 py-2 rounded border border-[rgba(230,184,107,.5)] bg-[rgba(16,43,40,.6)] hover:bg-[rgba(16,43,40,.9)] text-white transition-all cursor-pointer flex items-center gap-2"
             >
               <RotateCcw className="w-3.5 h-3.5 text-[var(--gold)]" />

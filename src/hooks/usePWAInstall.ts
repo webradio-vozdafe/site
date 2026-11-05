@@ -114,6 +114,7 @@ export function usePWAInstall() {
   return {
     isInstallable: !!(deferredPrompt || (typeof window !== 'undefined' && window.__pwaInstallPrompt)),
     isInstalled,
+    isStandalone: isInstalled,
     isIOS,
     isAndroid,
     isInAppBrowser,

@@ -46,8 +46,15 @@
       (function() {
         var origConsoleError = console.error;
         console.error = function() {
-          var msg = Array.prototype.slice.call(arguments).join(' ');
-          if (msg.includes('WebSocket') || msg.includes('closed without opened')) {
+          var msg = '';
+          try {
+            msg = Array.prototype.map.call(arguments, function(a) {
+              return (a && (a.stack || a.message)) ? (a.message + ' ' + (a.stack || '')) : String(a);
+            }).join(' ');
+          } catch(e) {
+            msg = '';
+          }
+          if (msg.includes('WebSocket') || msg.includes('closed without opened') || msg.includes('vite:ws') || msg.includes('vite-hmr')) {
             return;
           }
           origConsoleError.apply(console, arguments);
@@ -55,7 +62,7 @@
 
         if (typeof window !== 'undefined' && window.WebSocket) {
           var OrigWebSocket = window.WebSocket;
-          window.WebSocket = function(url, protocols) {
+          function PatchedWebSocket(url, protocols) {
             var ws = protocols !== undefined ? new OrigWebSocket(url, protocols) : new OrigWebSocket(url);
             ws.addEventListener('error', function(err) {
               if (err && err.stopImmediatePropagation) {
@@ -63,32 +70,41 @@
               }
             });
             return ws;
-          };
-          window.WebSocket.prototype = OrigWebSocket.prototype;
-          window.WebSocket.CONNECTING = OrigWebSocket.CONNECTING;
-          window.WebSocket.OPEN = OrigWebSocket.OPEN;
-          window.WebSocket.CLOSING = OrigWebSocket.CLOSING;
-          window.WebSocket.CLOSED = OrigWebSocket.CLOSED;
+          }
+
+          PatchedWebSocket.prototype = OrigWebSocket.prototype;
+          PatchedWebSocket.CONNECTING = 0;
+          PatchedWebSocket.OPEN = 1;
+          PatchedWebSocket.CLOSING = 2;
+          PatchedWebSocket.CLOSED = 3;
+          window.WebSocket = PatchedWebSocket;
         }
 
         window.addEventListener('error', function(event) {
-          if (event && event.message && (
-            event.message.includes('WebSocket') ||
-            event.message.includes('closed without opened')
+          var text = (event && (event.message || (event.error && (event.error.message || event.error.stack)))) || '';
+          if (typeof text === 'string' && (
+            text.includes('WebSocket') ||
+            text.includes('closed without opened') ||
+            text.includes('vite')
           )) {
-            event.stopImmediatePropagation();
-            event.preventDefault();
+            if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+            if (event.preventDefault) event.preventDefault();
             return true;
           }
         }, true);
 
         window.addEventListener('unhandledrejection', function(event) {
-          if (event && event.reason && (
-            (event.reason.message && (event.reason.message.includes('WebSocket') || event.reason.message.includes('closed without opened'))) ||
-            (typeof event.reason === 'string' && event.reason.includes('WebSocket'))
-          )) {
-            event.stopImmediatePropagation();
-            event.preventDefault();
+          var reasonText = '';
+          try {
+            if (event && event.reason) {
+              reasonText = event.reason.message || event.reason.stack || String(event.reason);
+            }
+          } catch(e) {}
+
+          if (reasonText.includes('WebSocket') || reasonText.includes('closed without opened') || reasonText.includes('vite')) {
+            if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+            if (event.preventDefault) event.preventDefault();
+            return true;
           }
         }, true);
       })();

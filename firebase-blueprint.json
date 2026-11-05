@@ -39,7 +39,7 @@
         "dedicationTo": { "type": "string" },
         "message": { "type": "string" },
         "requestedAt": { "type": "string" },
-        "status": { "type": "string", "enum": ["na_fila", "tocando", "atendido"] }
+        "status": { "type": "string", "enum": ["na_fila", "no_ar", "atendido"] }
       },
       "required": ["listenerName", "songTitle", "requestedAt", "status"]
     },

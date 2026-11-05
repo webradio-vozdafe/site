@@ -1,78 +1,73 @@
-# Especificação de Requisitos de Finalização (Spec.md) — Rádio Vóz da Fé
+# Especificação Funcional e Técnica de Implementação (Spec) — Rádio Vóz da Fé
 
-**Data e Hora de Geração:** 04/11/2026 às 14:32 (Horário de Brasília - BRT)  
-**Base de Análise:** `analytics/report.md`  
-**Escopo:** Especificação técnica focada exclusivamente no que falta finalizar (Páginas, Comportamentos e Componentes).
-
----
-
-## 1. Módulo 1: PWA, Instalação e Gerenciamento do Service Worker
-
-### 1.1. Componente: `PWAInstallButton.tsx` & Hook `usePWAInstall.ts`
-- **Página / Local:** Cabeçalho da aplicação (`Navbar.tsx`), Menu lateral móvel (`MobileDrawer.tsx`) e Botão flutuante (`App.tsx`).
-- **Comportamentos Requeridos:**
-  - Detectar estado `isInstalled` via media query `(display-mode: standalone)` e ocultar botões de instalação após a confirmação de instalação no dispositivo.
-  - Ao clicar no botão de instalação, executar a chamada do prompt nativo `beforeinstallprompt` quando capturado.
-  - Oferecer orientação e atalho de abertura em aba direta para contextos limitados (iframes e WebViews de redes sociais).
-
-### 1.2. Arquivos: `/public/sw.js` & `src/main.tsx`
-- **Comportamentos Requeridos:**
-  - Garantir o registro do Service Worker via `virtual:pwa-register` com estratégia de atualização automática (`immediate: true`).
-  - Executar a limpeza de versões de cache desatualizadas durante o evento `activate` no Service Worker.
+**Data e Hora de Geração:** 05/11/2026 08:50 (Horário de Brasília)  
+**Projeto:** Rádio Vóz da Fé (FM 104.9 MHz & Web HD)  
+**Documento de Origem:** `/analytics/report.md` & `/references/PRD.md`  
+**Escopo:** Especificação do que falta implementar e corrigir (Páginas, Comportamentos, Componentes e Mapeamentos).
 
 ---
 
-## 2. Módulo 2: Player de Áudio, Qualidade e Auto-Reconexão de Rede
-
-### 2.1. Componente: `NowPlayingSection.tsx` & Contexto `RadioContext.tsx`
-- **Página / Local:** Seção principal do player ao vivo (`/inicio`).
-- **Comportamentos Requeridos:**
-  - Persistir a preferência de bitrate selecionada (HD 128 kbps ou Econômico 64 kbps) no `localStorage` sob a chave `vozdafe_audio_quality`.
-  - Ao alternar a qualidade do áudio ou solicitar reconexão, realizar a limpeza da instância do áudio (`audioRef.current.pause()`, remoção de ouvintes de eventos e reatribuição da URL).
-
-### 2.2. Comportamento do Ciclo de Rede (`isOnline`)
-- **Página / Local:** Escuta global na aplicação (`App.tsx`).
-- **Comportamentos Requeridos:**
-  - Monitorar eventos de rede `online` e `offline`.
-  - Quando a conexão for restabelecida (`online`), acionar automaticamente a reconexão da rádio caso estivesse em execução antes da perda de sinal.
+## 1. Visão Geral da Especificação
+Esta especificação define os requisitos funcionais, comportamentais e de componentes necessários para sanar todos os erros diagnosticados no relatório `/analytics/report.md` e garantir conformidade com a edição do PRD (Versão 2.0.0).
 
 ---
 
-## 3. Módulo 3: Mural de Oração e Pedidos de Hino (Firestore)
+## 2. Requisitos de Comportamento & Tratamento de Erros (Behavior)
 
-### 3.1. Componente: `PrayerWallSection.tsx`
-- **Página / Local:** Seção do Mural de Oração (`/oracao`).
-- **Comportamentos Requeridos:**
-  - Implementar incremento otimista local no contador de orações ao clicar em "Orar por este pedido" antes da resposta da escrita no Firestore.
-  - Capturar falhas de gravação ou escuta no Firestore exibindo mensagem informativa amigável via aviso flutuante (`showNotice`).
+### SPEC-BE-01: Tratamento Gracioso de Erros no Firestore Listener
+* **Objetivo:** Impedir o lançamento de exceções não tratadas (*uncaught errors*) durante a sincronização em tempo real.
+* **Especificação Comportamental:**
+  * Em `RadioContext.tsx`, reestruturar `handleFirestoreError` para capturar e registrar erros via `console.warn` em vez de executar `throw new Error(...)`.
+  * Em caso de falha de conexão ou permissão nos listeners `onSnapshot` (`prayerRequests`, `songRequests`, `contactMessages`, `podcasts`), a aplicação deve manter e exibir os dados armazenados em `localStorage` ou o estado otimista local.
 
-### 3.2. Componente: `SongRequestSection.tsx`
-- **Página / Local:** Seção de Pedido de Hinos (`/pedir-hino`).
-- **Comportamentos Requeridos:**
-  - Validar e higienizar os campos antes da gravação no Firestore (remover espaços em branco excessivos e aplicar limite de caracteres).
-  - Exibir confirmação visual de envio e resetar os campos do formulário.
+### SPEC-BE-02: Gerenciamento Unificado do Evento de Conexão `online`
+* **Objetivo:** Eliminar requisições duplicadas e falhas de Autoplay ao reconectar a internet.
+* **Especificação Comportamental:**
+  * Remover a escuta do evento `online` no arquivo `App.tsx` e manter unicamente no `RadioContext.tsx`.
+  * No `retryPlayback()`, verificar a propriedade `audio.paused` e tratar a rejeição da promessa do `play()` para exibir uma mensagem amigável sem acionar alertas ruidosos na tela.
 
----
-
-## 4. Módulo 4: Painel do Estúdio (`ControlPanel.tsx`)
-
-### 4.1. Componente: `ControlPanel.tsx`
-- **Página / Local:** Painel de Controle do Estúdio (`/estudio`).
-- **Comportamentos Requeridos:**
-  - Garantir o desbloqueio do `AudioContext` da Web Audio API mediante primeira interação do operador na mesa digital.
-  - Adicionar verificação e tratamento na chamada de sintetização de voz (`SpeechSynthesisUtterance`), prevendo cenários em que o idioma `pt-BR` não esteja instalado no sistema.
-  - Validar o formato dos dados de entrada durante a importação de backup em JSON, impedindo a sobreposição de estados inválidos.
+### SPEC-BE-03: Resiliência Offline e Roteamento no Service Worker (PWA)
+* **Objetivo:** Garantir que reloads em sub-rotas como `/programacao` e `/oracao` funcionem sem internet.
+* **Especificação Comportamental:**
+  * Atualizar a estratégia de navegação em `/public/sw.js` para capturar requisições de página (`mode === 'navigate'`) e retornar a cópia armazenada de `/index.html` do cache do Service Worker quando a rede falhar.
 
 ---
 
-## 5. Módulo 5: Sleep Timer e Ajuste de Layout do Mini Player
+## 3. Requisitos de Componentes e Sincronização de Estado (Components & State)
 
-### 5.1. Componente: `SleepTimerModal.tsx`
-- **Página / Local:** Modal de Temporizador de Sono.
-- **Comportamentos Requeridos:**
-  - Calcular o tempo restante com base na diferença em milissegundos entre o momento atual e a hora de encerramento alvo (`targetTimestamp - Date.now()`), garantindo precisão mesmo em segundo plano.
+### SPEC-CP-01: Reestruturação da Grade de Programação (`ScheduleSection.tsx`)
+* **Objetivo:** Exibir dinamicamente a grade de programação cadastrada ou editada no Painel do Estúdio.
+* **Especificação de Componente:**
+  * Modificar `ScheduleSection.tsx` para consumir o estado `programs` oriundo do hook `useRadio()`.
+  * Atualizar o filtro de seleção de dia (`selectedDay`) para utilizar `programs.filter(...)` garantindo que novos programas adicionados pelo estúdio apareçam instantaneamente para o público.
 
-### 5.2. Componente: `MiniBottomPlayer.tsx`
-- **Página / Local:** Rodapé flutuante da aplicação em telas móveis.
-- **Comportamentos Requeridos:**
-  - Ajustar o z-index e o espaçamento inferior (`pb-safe`) em telas menores que 640px para evitar sobreposição com o menu de navegação inferior (`BottomNavigation.tsx`).
+### SPEC-CP-02: Sincronização Dinâmica do Ticker de Versículos (`App.tsx`)
+* **Objetivo:** Evitar erros de estouro de array ao avançar a leitura da Palavra do Dia.
+* **Especificação de Componente:**
+  * Em `App.tsx`, substituir as ocorrências de `DAILY_VERSES.length` por `verses.length` para o cálculo do próximo índice (`(activeVerseIdx + 1) % verses.length`).
+
+### SPEC-CP-03: Módulo Pauta do Altar e Exportação para Cultos ao Vivo (`ControlPanel.tsx`)
+* **Objetivo:** Atender integralmente ao Requisito 4.6 do PRD.
+* **Especificação de Componente:**
+  * No `ControlPanel.tsx`, aprimorar a aba "Pauta do Altar" para compilar tanto os pedidos de oração quanto os pedidos de hinos e dedicatórias pendentes.
+  * Adicionar botões de ação: "Copiar Pauta do Altar", "Imprimir Pauta" e "Filtrar por Categoria".
+
+---
+
+## 4. Requisitos de Segurança & Controle de Acesso (RBAC & Mapping)
+
+### SPEC-SC-01: Controle Estrito de Acesso ao Painel do Estúdio (RBAC)
+* **Objetivo:** Garantir que apenas usuários com papel `admin` consigam abrir a interface do Estúdio.
+* **Especificação de Segurança:**
+  * Em `App.tsx` e `ControlPanel.tsx`, validar explicitamente `isLoggedIn && isAdmin` antes de alternar a flag `isControlPanelOpen`.
+  * Em `LoginView.tsx`, assegurar que os e-mails autorizados (`vibraefm@gmail.com`, `webradiovozdafe@gmail.com`) recebam automaticamente a propriedade `role: 'admin'` no documento do Firestore `/users/{uid}`.
+
+### SPEC-SC-02: Padronização dos Enums do Status de Pedidos de Hino
+* **Objetivo:** Harmonizar os valores de status entre banco de dados, regras de segurança e componentes visuais.
+* **Especificação de Mapeamento:**
+  * Padronizar o enum de status em toda a aplicação para: `'na_fila' | 'no_ar' | 'atendido'`.
+  * Atualizar `firebase-blueprint.json` e as verificações do `ControlPanel.tsx` e `SongRequestSection.tsx` para utilizarem estritamente essa convenção.
+
+---
+
+*Fim da Especificação Funcional e Técnica — Rádio Vóz da Fé.*

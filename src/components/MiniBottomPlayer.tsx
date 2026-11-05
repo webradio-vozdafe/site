@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, ChevronUp, Sliders, Moon } from 'lucide-react';
 import { useRadio } from '../context/RadioContext';
 import { auth } from '../lib/firebase';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 export const MiniBottomPlayer: React.FC = () => {
   const {
@@ -21,6 +22,7 @@ export const MiniBottomPlayer: React.FC = () => {
     activePodcast
   } = useRadio();
 
+  const { isInstalled, isStandalone } = usePWAInstall();
   const [showMiniPlayer, setShowMiniPlayer] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -41,7 +43,7 @@ export const MiniBottomPlayer: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (!showMiniPlayer) return null;
+  if (!showMiniPlayer || isInstalled || isStandalone) return null;
 
   const scrollToHero = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -57,7 +59,7 @@ export const MiniBottomPlayer: React.FC = () => {
         padding: '10px 16px',
         color: '#fffefa'
       }}
-      className="fixed bottom-[58px] lg:bottom-0 left-0 right-0 z-40 studio-floating-panel transition-all"
+      className="hidden lg:block fixed bottom-0 left-0 right-0 z-40 studio-floating-panel transition-all"
     >
       <div className="wrap flex items-center justify-between gap-4">
         {/* Left: Indicator & Program */}

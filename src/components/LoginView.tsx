@@ -23,7 +23,13 @@ export const LoginView: React.FC = () => {
           if (userDoc.exists()) {
             const data = userDoc.data();
             const isAdminEmail = currentUser.email === 'vibraefm@gmail.com' || currentUser.email === 'webradiovozdafe@gmail.com';
-            setIsAdmin(data.role === 'admin' || isAdminEmail);
+            const userIsAdmin = data.role === 'admin' || isAdminEmail;
+            setIsAdmin(userIsAdmin);
+            if (userIsAdmin) {
+              setIsControlPanelOpen(true);
+            } else {
+              setActiveTab('perfil');
+            }
           } else {
             // Auto register user in users collection
             const isAdminEmail = currentUser.email === 'vibraefm@gmail.com' || currentUser.email === 'webradiovozdafe@gmail.com';
@@ -34,10 +40,12 @@ export const LoginView: React.FC = () => {
               createdAt: new Date().toISOString()
             }, { merge: true });
             setIsAdmin(isAdminEmail);
+            if (isAdminEmail) {
+              setIsControlPanelOpen(true);
+            } else {
+              setActiveTab('perfil');
+            }
           }
-
-          // Direct user to control panel upon successful login detection
-          setIsControlPanelOpen(true);
         } catch (err) {
           console.error("Error checking user role:", err);
           if (currentUser.email === 'vibraefm@gmail.com' || currentUser.email === 'webradiovozdafe@gmail.com') {
@@ -45,13 +53,14 @@ export const LoginView: React.FC = () => {
             setIsControlPanelOpen(true);
           } else {
             setIsAdmin(false);
+            setActiveTab('perfil');
           }
         }
       } else {
         setIsAdmin(false);
       }
     });
-  }, [setIsControlPanelOpen]);
+  }, [setIsControlPanelOpen, setActiveTab]);
 
   const handleLogin = async () => {
     setLoading(true);
@@ -61,10 +70,11 @@ export const LoginView: React.FC = () => {
       const result = await signInWithPopup(auth, provider);
       const loggedUser = result.user;
       
-      // Ensure user document exists and open control panel directly
+      // Ensure user document exists
       const userRef = doc(db, 'users', loggedUser.uid);
       const userDoc = await getDoc(userRef);
       const isAdminEmail = loggedUser.email === 'vibraefm@gmail.com' || loggedUser.email === 'webradiovozdafe@gmail.com';
+      const userIsAdmin = isAdminEmail || (userDoc.exists() && userDoc.data().role === 'admin');
 
       if (!userDoc.exists()) {
         await setDoc(userRef, {
@@ -77,7 +87,11 @@ export const LoginView: React.FC = () => {
         await setDoc(userRef, { role: 'admin' }, { merge: true });
       }
 
-      setIsControlPanelOpen(true);
+      if (userIsAdmin) {
+        setIsControlPanelOpen(true);
+      } else {
+        setActiveTab('perfil');
+      }
     } catch (error: any) {
       console.error("Login error:", error);
       setErrorMsg("Não foi possível concluir o login com o Google. Tente novamente.");

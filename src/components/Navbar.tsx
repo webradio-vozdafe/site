@@ -11,7 +11,8 @@ import {
   MessageCircle,
   Volume2,
   Users,
-  User
+  User,
+  Moon
 } from 'lucide-react';
 import { useRadio } from '../context/RadioContext';
 import { RADIO_STATION } from '../data/radioData';
@@ -24,7 +25,7 @@ import { PWAInstallButton } from './PWAInstallButton';
 
 
 export const Navbar: React.FC = () => {
-  const { activeTab, setActiveTab, isPlaying, togglePlay, setIsControlPanelOpen, stationSettings } = useRadio();
+  const { activeTab, setActiveTab, isPlaying, togglePlay, setIsControlPanelOpen, stationSettings, sleepTimerRemainingSec, setSleepTimer } = useRadio();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -193,6 +194,27 @@ export const Navbar: React.FC = () => {
                 {RADIO_STATION.onlineListeners.toLocaleString('pt-BR')} ouvindo
               </span>
             </div>
+
+            {/* Active Sleep Timer Badge */}
+            {sleepTimerRemainingSec && sleepTimerRemainingSec > 0 && (
+              <div
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold"
+                title="Temporizador de Sono ativo"
+              >
+                <Moon className="w-3.5 h-3.5 text-amber-400" />
+                <span>
+                  {Math.floor(sleepTimerRemainingSec / 60)}m
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSleepTimer(null)}
+                  className="text-amber-400 hover:text-white ml-0.5 cursor-pointer font-sans text-[10px]"
+                  title="Desativar temporizador de sono"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
             {/* PWA Install Button */}
             <PWAInstallButton />

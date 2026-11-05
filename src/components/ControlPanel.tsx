@@ -190,6 +190,22 @@ export const ControlPanel: React.FC = () => {
     setTimeout(() => setPanelToast(null), 3800);
   };
 
+  // Accessible Delete Confirmation Modal State
+  const [deleteConfirmState, setDeleteConfirmState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  const openDeleteConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setDeleteConfirmState({ isOpen: true, title, message, onConfirm });
+  };
+
+  const closeDeleteConfirm = () => {
+    setDeleteConfirmState(null);
+  };
+
   // Soundboard active effect state for visual indicator
   const [activeSoundboardEffect, setActiveSoundboardEffect] = useState<string | null>(null);
   const soundboardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -2267,10 +2283,14 @@ export const ControlPanel: React.FC = () => {
                       </button>
                       <button
                         onClick={() => {
-                          if (confirm(`Excluir o programa "${p.title}"?`)) {
-                            deleteProgram(p.id);
-                            showToast('Programa excluído da grade.');
-                          }
+                          openDeleteConfirm(
+                            'Excluir Programa',
+                            `Tem certeza que deseja excluir o programa "${p.title}" da grade?`,
+                            () => {
+                              deleteProgram(p.id);
+                              showToast('Programa excluído da grade.');
+                            }
+                          );
                         }}
                         className="text-red-400 hover:text-red-300 cursor-pointer"
                         title="Excluir"
@@ -2372,10 +2392,14 @@ export const ControlPanel: React.FC = () => {
                       {verses.length > 1 && (
                         <button
                           onClick={() => {
-                            if (confirm(`Excluir o versículo "${v.reference}"?`)) {
-                              deleteVerse(v.id);
-                              showToast('Versículo excluído.');
-                            }
+                            openDeleteConfirm(
+                              'Excluir Versículo',
+                              `Tem certeza que deseja excluir o versículo "${v.reference}" do acervo?`,
+                              () => {
+                                deleteVerse(v.id);
+                                showToast('Versículo excluído.');
+                              }
+                            );
                           }}
                           className="text-red-400 hover:text-red-300 cursor-pointer"
                           title="Excluir"
@@ -2490,10 +2514,14 @@ export const ControlPanel: React.FC = () => {
 
                       <button
                         onClick={() => {
-                          if (confirm(`Remover mensagem de ${msg.name}?`)) {
-                            deleteContactMessage(msg.id);
-                            showToast('Mensagem removida.');
-                          }
+                          openDeleteConfirm(
+                            'Remover Mensagem',
+                            `Tem certeza que deseja remover a mensagem enviada por ${msg.name}?`,
+                            () => {
+                              deleteContactMessage(msg.id);
+                              showToast('Mensagem removida.');
+                            }
+                          );
                         }}
                         className="text-red-400 hover:text-red-300 cursor-pointer p-1"
                         title="Excluir"
@@ -2581,10 +2609,14 @@ export const ControlPanel: React.FC = () => {
 
                     <button
                       onClick={() => {
-                        if (confirm(`Excluir a ministração "${pod.title}"?`)) {
-                          deletePodcast(pod.id);
-                          showToast('Ministração removida do catálogo.');
-                        }
+                        openDeleteConfirm(
+                          'Excluir Ministração',
+                          `Tem certeza que deseja excluir a ministração "${pod.title}" do catálogo?`,
+                          () => {
+                            deletePodcast(pod.id);
+                            showToast('Ministração removida do catálogo.');
+                          }
+                        );
                       }}
                       className="text-red-400 hover:text-red-300 cursor-pointer"
                     >
@@ -3494,6 +3526,62 @@ export const ControlPanel: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Accessible Delete Confirmation Dialog */}
+      {deleteConfirmState && deleteConfirmState.isOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={deleteConfirmState.title}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in"
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '420px',
+              background: 'var(--paper)',
+              color: 'var(--ink)',
+              borderRadius: '8px',
+              border: '1px solid var(--line)',
+              padding: '24px',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)'
+            }}
+          >
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--line)]">
+              <h3 className="font-serif text-lg font-bold text-[var(--forest)] m-0">
+                {deleteConfirmState.title}
+              </h3>
+              <button onClick={closeDeleteConfirm} className="text-slate-400 hover:text-black cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-[var(--ink)] leading-relaxed mb-5 m-0">
+              {deleteConfirmState.message}
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={closeDeleteConfirm}
+                className="px-4 py-2 border border-[#bcc4b9] rounded text-xs font-medium cursor-pointer hover:bg-slate-100"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteConfirmState.onConfirm();
+                  closeDeleteConfirm();
+                }}
+                className="px-4 py-2 rounded bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs cursor-pointer shadow-md"
+              >
+                Confirmar Exclusão
+              </button>
+            </div>
           </div>
         </div>
       )}

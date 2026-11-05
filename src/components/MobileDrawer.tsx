@@ -33,6 +33,17 @@ export const MobileDrawer: React.FC<{ isOpen: boolean; onClose: () => void; isLo
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const navItems = [
     { id: 'ao-vivo', path: '/inicio', label: 'Início', icon: Home },
     { id: 'programacao', path: '/programacao', label: 'Programação', icon: Calendar },
@@ -45,7 +56,12 @@ export const MobileDrawer: React.FC<{ isOpen: boolean; onClose: () => void; isLo
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 lg:hidden flex justify-center items-start overflow-y-auto bg-slate-950/85 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Menu de Navegação Principal"
+      className="fixed inset-0 z-50 lg:hidden flex justify-center items-start overflow-y-auto bg-slate-950/85 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200"
+    >
       {/* Background Overlay dismiss */}
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
 

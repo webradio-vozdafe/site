@@ -472,6 +472,11 @@ const MainView: React.FC = () => {
     <>
       <a className="skip-link" href="/inicio" onClick={(e) => { e.preventDefault(); document.getElementById('conteudo')?.scrollIntoView({ behavior: 'smooth' }); }}>Pular para o conteúdo</a>
 
+      {/* Screen Reader ARIA Live Region for Status Announcements */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {noticeText || (isPlaying ? "Rádio Vóz da Fé ao vivo no ar" : "Rádio em silêncio")}
+      </div>
+
       {/* Offline Connectivity Warning Banner */}
       {!isOnline && (
         <div

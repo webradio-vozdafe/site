@@ -1,74 +1,73 @@
-# Plano Estratégico de Implementação — Issues / Analytics
+# Plano Estratégico de Implementação — Issues / Analytics (Finalizações)
 
-**Data e Hora de Geração:** 05/11/2026 08:50 (Horário de Brasília)  
-**Data e Hora de Conclusão da Execução:** 05/11/2026 08:58 (Horário de Brasília)  
+**Data e Hora de Geração:** 05/11/2026 10:01 (Horário de Brasília)  
+**Data e Hora de Conclusão:** 05/11/2026 10:07 (Horário de Brasília)  
 **Projeto:** Rádio Vóz da Fé (FM 104.9 MHz & Web HD)  
-**Status do Documento:** EXECUÇÃO CONCLUÍDA (100% das Issues Resolvidas e Validadas)  
+**Status do Documento:** EXECUÇÃO CONCLUÍDA (100% das Issues Finalizadas e Validadas)  
 **Diretiva:** Execução rigorosa dos módulos e sinalização de progresso.
 
 ---
 
 ## 1. Visão Geral do Planejamento
-Este documento detalha o plano de execução para sanar sequencialmente todas as 5 issues mapeadas na pasta `/analytics/issues/`. O plano foi executado seguindo os princípios de **modificação mínima, resiliência do sistema e preservação das funcionalidades existentes**.
+Este documento estabelece o plano de execução para implementar sequencialmente todas as 5 issues derivadas da análise de finalizações no repositório (`/analytics/issues/`). O plano foi executado respeitando as diretrizes de **modificação mínima, resiliência do sistema, acessibilidade WCAG 2.1 AA e preservação das funcionalidades existentes**.
 
 ---
 
 ## 2. Cronograma e Ordem Técnica de Execução
 
-| Etapa | Issue Alvo | Foco Técnico | Status de Conclusão |
+| Etapa | Issue Alvo | Foco Técnico | Status |
 | :---: | :--- | :--- | :---: |
-| **Fase 1** | `issue-01-firestore-resilience.md` | Estabilização de exceções e captura silenciosa de falhas no `RadioContext`. | **[CONCLUÍDO]** |
-| **Fase 2** | `issue-04-rbac-and-studio-security.md` | Proteção de acesso ao Painel do Estúdio (`isAdmin`) e checagem no `App.tsx`. | **[CONCLUÍDO]** |
-| **Fase 3** | `issue-02-schedule-and-verses-sync.md` | Sincronização reativa da grade (`ScheduleSection`) e ticker (`App.tsx`). | **[CONCLUÍDO]** |
-| **Fase 4** | `issue-03-song-request-status-and-pauta.md` | Unificação dos enums do Firestore (`na_fila`, `no_ar`, `atendido`) e Pauta do Altar. | **[CONCLUÍDO]** |
-| **Fase 5** | `issue-05-audio-autoplay-and-pwa-offline.md` | Desduplicação do listener `online` e fallback SPA no `/public/sw.js`. | **[CONCLUÍDO]** |
+| **Fase 1** | `issue-01-audio-visualizer-and-reconnection.md` | Interrupção de rAF no canvas com áudio inativo e reconexão automática exponencial no `RadioContext`. | **[CONCLUÍDO]** |
+| **Fase 2** | `issue-02-sleep-timer-badge.md` | Exibição de badge compacto com contagem regressiva no `MiniBottomPlayer` e `Navbar`. | **[CONCLUÍDO]** |
+| **Fase 3** | `issue-03-pauta-do-altar-filters-and-deletion.md` | Filtros por categoria na Pauta do Altar e modal de confirmação acessível em `ControlPanel.tsx`. | **[CONCLUÍDO]** |
+| **Fase 4** | `issue-04-accessibility-focus-trap-and-aria-live.md` | Implementação de Focus Trap em modais (`MobileDrawer`, `SleepTimerModal`) e região `aria-live`. | **[CONCLUÍDO]** |
+| **Fase 5** | `issue-05-offline-sync-indicator.md` | Notificação de contagem de itens em fila local e aviso de reconexão no `OfflineIndicator.tsx`. | **[CONCLUÍDO]** |
 
 ---
 
 ## 3. Detalhamento Técnico das Etapas
 
-### Fase 1: Resiliência do Firestore (`issue-01-firestore-resilience.md`)
-* **Pesquisa & Análise:** Verificar todas as ocorrências de `handleFirestoreError` em `src/context/RadioContext.tsx`.
+### Fase 1: Visualizador e Reconexão de Áudio (`issue-01-audio-visualizer-and-reconnection.md`)
+* **Pesquisa & Análise:** Avaliar o ciclo de vida do `requestAnimationFrame` em `AudioVisualizer.tsx` e os eventos de erro no `RadioContext.tsx`.
 * **Plano de Ação:**
-  1. Alterar a assinatura e implementação do `handleFirestoreError` para logar avisos em `console.warn` em vez de disparar `throw`.
-  2. Ajustar as inscrições `onSnapshot` para manter os dados armazenados em `localStorage` quando houver falha de rede ou falta de permissão.
-* **Validação:** Desconectar temporariamente a rede e verificar se a interface continua responsiva sem quebras no React.
+  1. Adicionar condição de pausa no laço de animação do `AudioVisualizer.tsx` quando `!isPlaying || isMuted`.
+  2. Implementar função `scheduleExponentialRetry(attempt)` no `RadioContext.tsx` utilizando `setTimeout` progressivos (3s, 6s, 12s).
+* **Validação:** Verificar redução de uso de CPU com player pausado e testar simulação de queda de rede.
 
-### Fase 2: Segurança RBAC (`issue-04-rbac-and-studio-security.md`)
-* **Pesquisa & Análise:** Mapear o fluxo de abertura do Painel do Estúdio em `App.tsx` e o cadastro de administradores em `LoginView.tsx`.
+### Fase 2: Visualização do Sleep Timer (`issue-02-sleep-timer-badge.md`)
+* **Pesquisa & Análise:** Verificar a disponibilidade do tempo restante do Sleep Timer no `RadioContext.tsx`.
 * **Plano de Ação:**
-  1. Adicionar validação `isLoggedIn && isAdmin` antes de setar `isControlPanelOpen(true)`.
-  2. Garantir que os e-mails mestres (`vibraefm@gmail.com`, `webradiovozdafe@gmail.com`) recebam a role `'admin'` no Firestore `/users/{uid}`.
-* **Validação:** Testar acesso com usuário ouvinte comum e validar redirecionamento seguro para `/perfil`.
+  1. Formatar os minutos restantes (`Math.ceil(remainingMs / 60000)`).
+  2. Inserir badge estilizado com paleta `--gold` no `MiniBottomPlayer.tsx` e `Navbar.tsx`.
+* **Validação:** Ativar o timer para 15 minutos e checar a presença do badge `⏱ 15m`.
 
-### Fase 3: Sincronização de Grade e Ticker (`issue-02-schedule-and-verses-sync.md`)
-* **Pesquisa & Análise:** Verificar a importação direta de `SCHEDULE_PROGRAMS` em `ScheduleSection.tsx` e o cálculo de índice em `App.tsx`.
+### Fase 3: Filtros da Pauta do Altar e Modal de Confirmação (`issue-03-pauta-do-altar-filters-and-deletion.md`)
+* **Pesquisa & Análise:** Verificar o estado de filtragem dos arrays de oração e músicas no `ControlPanel.tsx`.
 * **Plano de Ação:**
-  1. Substituir `SCHEDULE_PROGRAMS` por `programs` do `useRadio()` em `ScheduleSection.tsx`.
-  2. Atualizar o ticker de versículos em `App.tsx` para calcular o resto da divisão por `verses.length`.
-* **Validação:** Adicionar um programa de teste no Painel e conferir se ele aparece imediatamente na aba de Programação pública.
+  1. Criar estado `selectedCategoryFilter` no `ControlPanel.tsx`.
+  2. Criar sub-componente modal de confirmação de exclusão acessível.
+* **Validação:** Selecionar a categoria "Família" e conferir a atualização da pauta filtrada.
 
-### Fase 4: Padronização de Enums e Pauta do Altar (`issue-03-song-request-status-and-pauta.md`)
-* **Pesquisa & Análise:** Revisar os valores dos campos de status em `firebase-blueprint.json`, `ControlPanel.tsx` e `SongRequestSection.tsx`.
+### Fase 4: Focus Trap e Acessibilidade (`issue-04-accessibility-focus-trap-and-aria-live.md`)
+* **Pesquisa & Análise:** Mapear elementos focáveis em `MobileDrawer.tsx` e `SleepTimerModal.tsx`.
 * **Plano de Ação:**
-  1. Padronizar o enum para: `'na_fila' | 'no_ar' | 'atendido'`.
-  2. Atualizar a exibição da Pauta do Altar em `ControlPanel.tsx` compilando orações e hinos com dedicatórias em uma área de cópia rápida.
-* **Validação:** Mudar o status de um pedido para "No Ar" no Painel e checar o destaque visual no card do ouvinte.
+  1. Adicionar ouvinte de tecla `Tab` para interceptar a navegação e mantê-la no container modal.
+  2. Adicionar região `<div aria-live="polite" className="sr-only" />` no `App.tsx`.
+* **Validação:** Navegar por teclado usando `Tab` com o modal aberto e checar se o foco permanece contido.
 
-### Fase 5: Ajustes de Autoplay e PWA Offline (`issue-05-audio-autoplay-and-pwa-offline.md`)
-* **Pesquisa & Análise:** Inspecionar os escutadores do evento `online` em `App.tsx` e a estratégia de fetch em `/public/sw.js`.
+### Fase 5: Indicador de Fila Offline (`issue-05-offline-sync-indicator.md`)
+* **Pesquisa & Análise:** Verificar o leitor de fila local no `usePWAInstall.ts` ou `RadioContext.tsx`.
 * **Plano de Ação:**
-  1. Remover o listener `online` redundante de `App.tsx`.
-  2. Tratar a promessa do `play()` em `RadioContext.tsx` com captura de erros de Autoplay.
-  3. Adicionar fallback `/index.html` em `/public/sw.js` para rotas de navegação SPA.
-* **Validação:** Testar reloads em sub-rotas como `/oracao` estando offline.
+  1. Exibir badge informativo no `OfflineIndicator.tsx` indicando pendências offline.
+  2. Disparar toast ao retornar a conexão `online`.
+* **Validação:** Enviar pedido offline e conferir o aviso de contagem no indicador.
 
 ---
 
 ## 4. Estratégia de Verificação e Qualidade
-Ao receber autorização para executar as alterações, cada etapa será validada executando:
-1. `compile_applet`: Verificação de compilação rigorosa do TypeScript.
-2. `lint_applet`: Verificação de sintaxe, imports e integridade de enums.
+Quando autorizado a iniciar as alterações, cada etapa será validada executando:
+1. `compile_applet`: Verificação TypeScript strict sem erros.
+2. `lint_applet`: Verificação de sintaxe e imports sem avisos.
 
 ---
 

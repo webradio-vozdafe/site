@@ -14,8 +14,8 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
   heightClass = 'h-5',
   useCanvas = true
 }) => {
-  const { isPlaying: contextIsPlaying } = useRadio();
-  const isPlaying = propIsPlaying !== undefined ? propIsPlaying : contextIsPlaying;
+  const { isPlaying: contextIsPlaying, isMuted } = useRadio();
+  const isPlaying = (propIsPlaying !== undefined ? propIsPlaying : contextIsPlaying) && !isMuted;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animId: number;
+    let animId: number | null = null;
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
     const rect = canvas.getBoundingClientRect();
     const width = rect.width || (barCount * 5);
@@ -79,14 +79,14 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
     render();
 
     return () => {
-      if (animId) {
+      if (animId !== null) {
         cancelAnimationFrame(animId);
       }
     };
   }, [isPlaying, barCount, useCanvas]);
 
   return (
-    <div className={`flex items-center ${heightClass}`} title={isPlaying ? "Transmissão ao vivo em andamento" : "Transmissão pausada"}>
+    <div className={`flex items-center ${heightClass}`} title={isPlaying ? "Transmissão ao vivo em andamento" : "Transmissão em silêncio"}>
       <canvas
         ref={canvasRef}
         style={{ width: `${barCount * 5}px`, height: '20px' }}
